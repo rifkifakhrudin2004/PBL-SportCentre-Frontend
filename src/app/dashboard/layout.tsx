@@ -10,7 +10,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <main className="p-4 md:p-6">{children}</main>
+        <main className="p-4 md:p-6 container mx-auto">{children}</main>
       </div>
     </div>
   );
