@@ -1,8 +1,29 @@
 import axiosInstance from './axios.config';
-import { Branch } from '../types';
+import { Branch, User } from '@/types';
 
-// Interface untuk format respons dengan data dan meta
-interface BranchResponseWithMeta {
+// Interface untuk request dan response
+export interface CreateBranchRequest {
+  name: string;
+  location: string;
+  imageUrl?: string;
+}
+
+export interface UpdateBranchRequest {
+  name?: string;
+  location?: string;
+  imageUrl?: string;
+  status?: 'active' | 'inactive';
+}
+
+export interface BranchListParams {
+  page?: number;
+  limit?: number;
+  status?: 'active' | 'inactive';
+  search?: string;
+  q?: string;
+}
+
+export interface BranchListResponse {
   data: Branch[];
   meta: {
     page: number;
@@ -11,151 +32,95 @@ interface BranchResponseWithMeta {
     totalPages: number;
     hasNextPage: boolean;
     hasPrevPage: boolean;
-  }
+  };
+}
+
+export interface BranchAdmin {
+  userId: number;
+  branchId: number;
+  user: User;
 }
 
 class BranchApi {
   /**
-   * Dapatkan semua cabang
-   * @returns Promise dengan array data cabang
+   * Mendapatkan daftar cabang
    */
-  async getAllBranches(): Promise<Branch[]> {
-    try {
-      const response = await axiosInstance.get<BranchResponseWithMeta | { branches: Branch[] } | Branch[]>('/branches');
-      
-      // Handle format respons yang berbeda-beda
-      if (response.data && typeof response.data === 'object') {
-        // Format 1: { data: [...], meta: {...} }
-        if ('data' in response.data && Array.isArray(response.data.data)) {
-          return response.data.data;
-        }
-        // Format 2: { branches: [...] }
-        else if ('branches' in response.data && Array.isArray(response.data.branches)) {
-          return response.data.branches;
-        }
-        // Format 3: Array langsung [...]
-        else if (Array.isArray(response.data)) {
-          return response.data;
-        }
-      }
-      
-      // Jika format tidak dikenali, kembalikan array kosong
-      console.error('Unexpected response format:', response.data);
-      return [];
-    } catch (error) {
-      console.error('Error fetching branches:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Dapatkan cabang berdasarkan ID
-   * @param id - ID cabang
-   * @returns Promise dengan data cabang
-   */
-  async getBranchById(id: number): Promise<Branch> {
-    try {
-      const response = await axiosInstance.get<
-        { data: Branch } | 
-        { branch: Branch } | 
-        Branch | 
-        { status: boolean; message: string; data: { branch: Branch } }
-      >(`/branches/${id}`);
-      
-      // Handle format respons yang berbeda-beda
-      if (response.data && typeof response.data === 'object') {
-        // Format 1: { data: {...} } (bukan format { status, message, data })
-        if ('data' in response.data && !('status' in response.data) && !('message' in response.data)) {
-          return response.data.data;
-        }
-        // Format 2: { branch: {...} }
-        else if ('branch' in response.data && !('data' in response.data)) {
-          return response.data.branch;
-        }
-        // Format 3: Objek branch langsung
-        else if ('id' in response.data && 'name' in response.data) {
-          return response.data as Branch;
-        }
-        // Format 4: { status, message, data: { branch } } - Format API baru
-        else if ('status' in response.data && 'message' in response.data && 'data' in response.data) {
-          if (response.data.data && typeof response.data.data === 'object' && 'branch' in response.data.data) {
-            return response.data.data.branch as Branch;
-          }
-        }
-      }
-      
-      throw new Error('Unexpected response format');
-    } catch (error) {
-      console.error(`Error fetching branch with ID ${id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Buat cabang baru
-   * @param data - Data cabang baru
-   * @returns Promise dengan data cabang yang berhasil dibuat
-   */
-  async createBranch(data: Omit<Branch, 'id' | 'createdAt'>): Promise<Branch> {
-    const response = await axiosInstance.post<{ branch: Branch } | { data: Branch }>('/branches', data);
-    
-    // Format 1: { data: {...} }
-    if ('data' in response.data) {
-      return response.data.data;
-    }
-    // Format 2: { branch: {...} }
-    return response.data.branch;
-  }
-
-  /**
-   * Update data cabang
-   * @param id - ID cabang
-   * @param data - Data cabang yang akan diupdate
-   * @returns Promise dengan data cabang yang berhasil diupdate
-   */
-  async updateBranch(id: number, data: Partial<Omit<Branch, 'id' | 'createdAt'>>): Promise<Branch> {
-    const response = await axiosInstance.put<{ branch: Branch } | { data: Branch }>(`/branches/${id}`, data);
-    
-    // Format 1: { data: {...} }
-    if ('data' in response.data) {
-      return response.data.data;
-    }
-    // Format 2: { branch: {...} }
-    return response.data.branch;
-  }
-
-  /**
-   * Hapus cabang
-   * @param id - ID cabang
-   * @returns Promise dengan pesan sukses
-   */
-  async deleteBranch(id: number): Promise<{ message: string }> {
-    const response = await axiosInstance.delete<{ message: string }>(`/branches/${id}`);
+  async getBranches(params?: BranchListParams): Promise<BranchListResponse> {
+    const response = await axiosInstance.get<BranchListResponse>('/branches', { params });
     return response.data;
   }
 
   /**
-   * Upload gambar untuk cabang
-   * @param id - ID cabang
-   * @param image - File gambar
-   * @returns Promise dengan URL gambar yang berhasil diupload
+   * Mendapatkan detail cabang berdasarkan ID
    */
-  async uploadBranchImage(id: number, image: File): Promise<{ imageUrl: string }> {
+  async getBranchById(id: number): Promise<Branch> {
+    const response = await axiosInstance.get<Branch>(`/branches/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Membuat cabang baru
+   */
+  async createBranch(data: CreateBranchRequest): Promise<Branch> {
+    const response = await axiosInstance.post<Branch>('/branches', data);
+    return response.data;
+  }
+
+  /**
+   * Mengupdate cabang
+   */
+  async updateBranch(id: number, data: UpdateBranchRequest): Promise<Branch> {
+    const response = await axiosInstance.put<Branch>(`/branches/${id}`, data);
+    return response.data;
+  }
+
+  /**
+   * Menghapus cabang
+   */
+  async deleteBranch(id: number): Promise<void> {
+    await axiosInstance.delete(`/branches/${id}`);
+  }
+
+  /**
+   * Mendapatkan daftar admin cabang
+   */
+  async getBranchAdmins(branchId: number): Promise<BranchAdmin[]> {
+    const response = await axiosInstance.get<BranchAdmin[]>(`/branches/${branchId}/admins`);
+    return response.data;
+  }
+
+  /**
+   * Menambah admin cabang
+   */
+  async addBranchAdmin(branchId: number, userId: number): Promise<void> {
+    await axiosInstance.post(`/branches/${branchId}/admins`, { userId });
+  }
+
+  /**
+   * Menghapus admin cabang
+   */
+  async removeBranchAdmin(branchId: number, userId: number): Promise<void> {
+    await axiosInstance.delete(`/branches/${branchId}/admins/${userId}`);
+  }
+
+  /**
+   * Upload gambar cabang
+   */
+  async uploadBranchImage(branchId: number, file: File): Promise<{ imageUrl: string }> {
     const formData = new FormData();
-    formData.append('image', image);
+    formData.append('image', file);
 
-    const response = await axiosInstance.post<{ imageUrl: string } | { data: { imageUrl: string } }>(`/branches/${id}/image`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    // Format 1: { data: { imageUrl: ... } }
-    if ('data' in response.data && typeof response.data.data === 'object' && 'imageUrl' in response.data.data) {
-      return { imageUrl: response.data.data.imageUrl };
-    }
-    // Format 2: { imageUrl: ... }
-    return response.data as { imageUrl: string };
+    const response = await axiosInstance.post<{ imageUrl: string }>(
+      `/branches/${branchId}/image`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    
+    return response.data;
   }
 }
 

@@ -15,7 +15,9 @@ export default function HomePage() {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const branches = await branchApi.getAllBranches();
+        const response = await branchApi.getBranches();
+        const branches = response.data || [];
+        console.log(branches);
         // Pastikan branches berupa array sebelum menggunakan slice
         if (Array.isArray(branches)) {
           // Hanya tampilkan maksimal 4 cabang

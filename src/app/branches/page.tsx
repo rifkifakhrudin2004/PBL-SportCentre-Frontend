@@ -22,9 +22,10 @@ export default function BranchesPage() {
       setLoading(true);
       setError(null);
       try {
-        const data = await branchApi.getAllBranches();
-        setBranches(Array.isArray(data) ? data : []);
-        setFilteredBranches(Array.isArray(data) ? data : []);
+        const response = await branchApi.getBranches();
+        const data = response.data || [];
+        setBranches(data);
+        setFilteredBranches(data);
       } catch (error) {
         console.error('Error fetching branches:', error);
         setError('Gagal memuat daftar cabang. Silakan coba lagi nanti.');

@@ -8,10 +8,25 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { Role } from '@/types';
 
 // Interface untuk Error dengan response
 interface ApiError {
@@ -33,6 +48,7 @@ const registerSchema = z
       .optional(),
     password: z.string().min(6, 'Password minimal 6 karakter'),
     confirmPassword: z.string().min(6, 'Konfirmasi password minimal 6 karakter'),
+    role: z.enum([Role.USER, Role.OWNER_CABANG, Role.ADMIN_CABANG, Role.SUPER_ADMIN]),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Password dan konfirmasi password tidak cocok',
@@ -56,6 +72,7 @@ export default function RegisterPage() {
       phone: '',
       password: '',
       confirmPassword: '',
+      role: Role.USER,
     },
   });
 
@@ -64,7 +81,7 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      await register(data.name, data.email, data.password, data.phone);
+      await register(data.name, data.email, data.password, data.phone, data.role);
       setSuccess(true);
       setTimeout(() => {
         router.push('/auth/login');
@@ -150,6 +167,33 @@ export default function RegisterPage() {
                   <FormControl>
                     <Input placeholder="+628xxxxxxxxxx" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mendaftar Sebagai</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih peran" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={Role.USER}>Pengguna</SelectItem>
+                      <SelectItem value={Role.OWNER_CABANG}>Pemilik Cabang</SelectItem>
+                      <SelectItem value={Role.ADMIN_CABANG}>Admin Cabang</SelectItem>
+                      <SelectItem value={Role.SUPER_ADMIN}>Super Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

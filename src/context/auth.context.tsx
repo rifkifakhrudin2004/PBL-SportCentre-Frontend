@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '@/types';
+import { User, Role } from '@/types';
 import { authApi } from '@/api/auth.api';
 
 export interface AuthContextType {
@@ -10,7 +10,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  register: (name: string, email: string, password: string, phone?: string, role?: Role) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updatedUser: User) => void;
 }
@@ -67,14 +67,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const register = async (userData: { name: string; email: string; password: string; phone?: string }) => {
+  const register = async (name: string, email: string, password: string, phone?: string, role?: Role) => {
     setIsLoading(true);
     try {
+      const userData = { name, email, password, phone, role };
       const response = await authApi.register(userData);
-      if (response.user) {
-        // Automatically log in after successful registration
-        setUser(response.user.user);
-        setToken(response.user.token);
+      if (response && response.user) {
+        // Register berhasil tapi tidak langsung login
+        // Login dilakukan di halaman login
       }
     } finally {
       setIsLoading(false);

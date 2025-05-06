@@ -1,5 +1,5 @@
 import axiosInstance from './axios.config';
-import { LoginRequest, RegisterRequest, UserWithToken } from '../types';
+import { LoginRequest, RegisterRequest, UserWithToken, User } from '../types';
 
 // Interface untuk error dengan response
 interface ApiError {
@@ -95,7 +95,7 @@ class AuthApi {
    */
   async refreshToken(): Promise<{ token: string }> {
     try {
-      const response = await axiosInstance.post<{ token: string }>('/auth/refresh');
+      const response = await axiosInstance.post<{ token: string }>('/auth/refresh-token');
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
@@ -106,6 +106,16 @@ class AuthApi {
       console.error('Error refreshing token:', error);
       throw error;
     }
+  }
+  
+  /**
+   * Update profil pengguna
+   * @param data - Data profil yang akan diupdate
+   * @returns Promise dengan data user yang diupdate
+   */
+  async updateProfile(userId: number, data: { name: string; phone?: string }): Promise<User> {
+    const response = await axiosInstance.put<{ user: User }>(`/users/${userId}`, data);
+    return response.data.user;
   }
 }
 

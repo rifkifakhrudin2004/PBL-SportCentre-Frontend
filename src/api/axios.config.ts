@@ -43,7 +43,7 @@ axiosInstance.interceptors.response.use(
       try {
         // Coba refresh token
         const refreshResponse = await axios.post(
-          `${BASE_URL}/auth/refresh`,
+          `${BASE_URL}/auth/refresh-token`,
           {},
           { withCredentials: true }
         );
