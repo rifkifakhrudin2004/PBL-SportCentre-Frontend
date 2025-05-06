@@ -33,7 +33,7 @@ export interface BranchListResponse {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   };
-}
+  }
 
 export interface BranchAdmin {
   userId: number;
@@ -47,7 +47,7 @@ class BranchApi {
    */
   async getBranches(params?: BranchListParams): Promise<BranchListResponse> {
     const response = await axiosInstance.get<BranchListResponse>('/branches', { params });
-    return response.data;
+          return response.data;
   }
 
   /**
@@ -114,9 +114,9 @@ class BranchApi {
       `/branches/${branchId}/image`,
       formData,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
       }
     );
     
