@@ -1,11 +1,16 @@
-import axiosInstance from './axios.config';
+import axiosInstance from '../config/axios.config';
 import { Branch, User } from '@/types';
 
 // Interface untuk request dan response
 export interface CreateBranchRequest {
   name: string;
+  address: string;
+  logo?: File;
+  open_time: string;
+  close_time: string;
   location: string;
-  imageUrl?: string;
+  ownerId: number;
+  admin_ids?: number[];
 }
 
 export interface UpdateBranchRequest {
@@ -62,7 +67,29 @@ class BranchApi {
    * Membuat cabang baru
    */
   async createBranch(data: CreateBranchRequest): Promise<Branch> {
-    const response = await axiosInstance.post<Branch>('/branches', data);
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('address', data.address);
+    formData.append('open_time', data.open_time);
+    formData.append('close_time', data.close_time);
+    formData.append('location', data.location);
+    formData.append('ownerId', data.ownerId.toString());
+    
+    if (data.logo) {
+      formData.append('logo', data.logo);
+    }
+    
+    if (data.admin_ids && data.admin_ids.length > 0) {
+      data.admin_ids.forEach(id => {
+        formData.append('admin_ids', id.toString());
+      });
+    }
+
+    const response = await axiosInstance.post<Branch>('/branches', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 

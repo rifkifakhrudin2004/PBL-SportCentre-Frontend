@@ -7,10 +7,15 @@ export interface Branch {
   id: number;
   name: string;
   location: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   ownerId: number;
   status: BranchStatus;
   createdAt: string;
+  owner?: {
+    id: number;
+    name: string;
+    email: string;
+  };
 }
 
 export interface BranchAdmin {

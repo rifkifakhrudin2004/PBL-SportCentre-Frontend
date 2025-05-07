@@ -1,4 +1,4 @@
-import axiosInstance from './axios.config';
+import axiosInstance from '../config/axios.config';
 import { Field, FieldReview, FieldType } from '../types';
 
 // Interface untuk format respons dengan data dan meta

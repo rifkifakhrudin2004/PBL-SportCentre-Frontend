@@ -4,6 +4,13 @@ import axios from 'axios';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
+// Tipe untuk parameter cache pada URL
+type CacheParams = {
+  _t?: number;
+  noCache?: string;
+  [key: string]: string | number | boolean | undefined;
+};
+
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
@@ -15,12 +22,32 @@ export const axiosInstance = axios.create({
 // Interceptor untuk menambahkan token ke setiap request
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Menambahkan token auth jika tersedia
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+
+    // Menambahkan cache busting parameter untuk GET requests
+    if (config.method?.toLowerCase() === 'get') {
+      // Inisialisasi params jika belum ada
+      config.params = config.params || {};
+      
+      // Tambahkan timestamp untuk cache busting
+      if (typeof config.params === 'object') {
+        const params = config.params as CacheParams;
+        params._t = new Date().getTime();
+        
+        // Untuk endpoint branches dan fields, tambahkan noCache=true
+        const url = config.url?.toLowerCase() || '';
+        if (url.includes('branch') || url.includes('field')) {
+          params.noCache = 'true';
+        }
+      }
+    }
+    
     return config;
   },
   (error) => {

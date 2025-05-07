@@ -1,4 +1,4 @@
-import axiosInstance from './axios.config';
+import axiosInstance from '../config/axios.config';
 import { Role } from '../types';
 
 // Interface untuk dashboard stats

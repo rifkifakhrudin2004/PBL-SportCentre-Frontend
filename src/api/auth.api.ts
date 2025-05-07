@@ -1,4 +1,4 @@
-import axiosInstance from './axios.config';
+import axiosInstance from '../config/axios.config';
 import { LoginRequest, RegisterRequest, UserWithToken, User } from '../types';
 
 // Interface untuk error dengan response
