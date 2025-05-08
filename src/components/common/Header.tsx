@@ -1,17 +1,31 @@
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/context/auth.context';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/auth.context";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useState, useEffect } from 'react';
-import { Menu, User, LogOut, Bell, Home, MapPin, Calendar, ChevronDown } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
+import {
+  Menu,
+  User,
+  LogOut,
+  Bell,
+  Home,
+  MapPin,
+  Calendar,
+  ChevronDown,
+} from "lucide-react";
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -28,48 +42,53 @@ export function Header() {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleLogout = async () => {
     try {
       await logout();
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error("Error logging out:", error);
     }
   };
 
   const isActive = (path: string) => {
-    if (path === '/' && pathname === '/') return true;
-    if (path !== '/' && pathname?.startsWith(path)) return true;
+    if (path === "/" && pathname === "/") return true;
+    if (path !== "/" && pathname?.startsWith(path)) return true;
     return false;
   };
 
   const navLinks = [
-    { href: '/', label: 'Beranda', icon: <Home size={16} /> },
-    { href: '/branches', label: 'Cabang', icon: <MapPin size={16} /> },
-    { href: '/fields', label: 'Lapangan', icon: <MapPin size={16} /> },
+    { href: "/", label: "Beranda", icon: <Home size={16} /> },
+    { href: "/branches", label: "Cabang", icon: <MapPin size={16} /> },
+    { href: "/fields", label: "Lapangan", icon: <MapPin size={16} /> },
   ];
 
   if (isAuthenticated) {
-    navLinks.push({ href: '/bookings', label: 'Pemesanan', icon: <Calendar size={16} /> });
+    navLinks.push({
+      href: "/bookings",
+      label: "Pemesanan",
+      icon: <Calendar size={16} />,
+    });
   }
 
   return (
-    <header 
-      className={`sticky top-0 z-50 w-full bg-background/95 backdrop-blur-sm transition-all duration-300 ${
-        scrolled ? 'shadow-md' : 'border-b'
+    <header
+      className={`fixed top-0 left-0 z-50 w-full ${
+        pathname === "/" ? "bg-skye/15" : "bg-skye"
+      } text-white backdrop-blur-sm transition-all duration-300 ${
+        scrolled ? "bg-skye/85" : "border-transparent"
       }`}
     >
       <div className="container px-4 sm:px-6 lg:px-8 mx-auto flex h-16 items-center justify-between">
-        {/* Logo / Brand */}
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <div className="bg-primary rounded-md p-1.5">
-              <svg 
+              <svg
                 viewBox="0 0 24 24"
-                fill="currentColor" 
+                fill="currentColor"
                 className="w-5 h-5 text-white"
               >
                 <path d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm4.75-6a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm0 3a.75.75 0 0 0 0 1.5h5.625a.75.75 0 0 0 0-1.5H7zm0 3a.75.75 0 0 0 0 1.5h5.625a.75.75 0 0 0 0-1.5H7zm0 3a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm9-3a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.75-.75zm.75 3a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm-5.5-12a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5z" />
@@ -79,17 +98,18 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Desktop */}
         <nav className="hidden md:flex items-center justify-center flex-1 max-w-3xl mx-auto px-4">
           <div className="flex items-center gap-2 justify-center">
             {navLinks.map((link) => (
-              <Link 
-                key={link.href} 
-                href={link.href} 
-                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 transition-colors
-                  ${isActive(link.href) 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-foreground/80 hover:bg-muted hover:text-foreground'
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-3 py-2 text-white rounded-md text-sm font-medium flex items-center gap-1.5 transition-colors
+                  ${
+                    isActive(link.href)
+                      ? "text-primary"
+                      : "text-white/50 hover:hover:text-white"
                   }`}
               >
                 {link.icon}
@@ -98,15 +118,19 @@ export function Header() {
             ))}
           </div>
         </nav>
-        
+
         {/* User Menu / Auth Buttons */}
         <div className="hidden md:flex items-center gap-2">
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
-                    {user?.name?.charAt(0) || 'U'}
+                <Button
+                  className={`flex items-center bg-transparent hover:bg-skye-hover gap-2 ${
+                    scrolled ? "bg-transparent" : "hover:bg-skye/25"
+                  }`}
+                >
+                  <div className="h-7 w-7 rounded-full text-white bg-primary/10 flex items-center justify-center text-xs font-semibold">
+                    {user?.name?.charAt(0) || "U"}
                   </div>
                   <span className="text-sm font-medium max-w-[120px] truncate">
                     {user?.name}
@@ -115,7 +139,9 @@ export function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5 text-sm font-medium">{user?.email}</div>
+                <div className="px-2 py-1.5 text-sm font-medium">
+                  {user?.email}
+                </div>
                 <DropdownMenuSeparator />
                 <Link href="/dashboard">
                   <DropdownMenuItem>
@@ -136,7 +162,10 @@ export function Header() {
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600"
+                >
                   <LogOut size={16} className="mr-2" />
                   Keluar
                 </DropdownMenuItem>
@@ -158,7 +187,7 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile Menu Trigger */}
+        {/* Mobile Menu */}
         <div className="md:hidden">
           <Sheet>
             <SheetTrigger asChild>
@@ -169,15 +198,17 @@ export function Header() {
             <SheetContent side="right" className="w-[280px] sm:w-[350px]">
               <div className="px-1 py-6 flex flex-col gap-6">
                 <div className="flex flex-col gap-1">
-                  <h3 className="font-medium text-sm text-muted-foreground px-4 pb-2">Menu</h3>
+                  <h3 className="font-medium text-sm text-muted-foreground px-4 pb-2">
+                    Menu
+                  </h3>
                   {navLinks.map((link) => (
                     <SheetClose asChild key={link.href}>
-                      <Link 
-                        href={link.href} 
+                      <Link
+                        href={link.href}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm ${
-                          isActive(link.href) 
-                            ? 'bg-primary/10 text-primary' 
-                            : 'hover:bg-muted'
+                          isActive(link.href)
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted"
                         }`}
                       >
                         {link.icon}
@@ -190,10 +221,12 @@ export function Header() {
                 {isAuthenticated ? (
                   <>
                     <div className="flex flex-col gap-1">
-                      <h3 className="font-medium text-sm text-muted-foreground px-4 pb-2">Akun</h3>
+                      <h3 className="font-medium text-sm text-muted-foreground px-4 pb-2">
+                        Akun
+                      </h3>
                       <SheetClose asChild>
-                        <Link 
-                          href="/dashboard" 
+                        <Link
+                          href="/dashboard"
                           className="flex items-center gap-2 px-4 py-2 rounded-md text-sm hover:bg-muted"
                         >
                           <User size={16} />
@@ -201,8 +234,8 @@ export function Header() {
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Link 
-                          href="/profile" 
+                        <Link
+                          href="/profile"
                           className="flex items-center gap-2 px-4 py-2 rounded-md text-sm hover:bg-muted"
                         >
                           <User size={16} />
@@ -210,8 +243,8 @@ export function Header() {
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Link 
-                          href="/notifications" 
+                        <Link
+                          href="/notifications"
                           className="flex items-center gap-2 px-4 py-2 rounded-md text-sm hover:bg-muted"
                         >
                           <Bell size={16} />
@@ -221,8 +254,8 @@ export function Header() {
                     </div>
                     <div className="mt-auto px-4">
                       <SheetClose asChild>
-                        <Button 
-                          variant="destructive" 
+                        <Button
+                          variant="destructive"
                           className="w-full"
                           onClick={handleLogout}
                         >
@@ -257,4 +290,4 @@ export function Header() {
       </div>
     </header>
   );
-} 
+}

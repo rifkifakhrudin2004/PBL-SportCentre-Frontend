@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
-import { MainLayout } from '@/components/layout/MainLayout';
 
 const loginSchema = z.object({
   email: z.string().email('Email tidak valid'),
@@ -50,8 +49,8 @@ export default function LoginPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
+    <>
+      <div className="max-w-md my-15 mx-auto p-6 bg-card rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center mb-6">Masuk</h1>
 
         {error && (
@@ -69,7 +68,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="nama@example.com" type="email" {...field} />
+                    <Input placeholder="nama@gmail.com" type="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -105,6 +104,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-    </MainLayout>
+    </>
   );
 } 
