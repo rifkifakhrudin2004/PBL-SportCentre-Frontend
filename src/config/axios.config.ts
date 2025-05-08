@@ -10,17 +10,6 @@ export const axiosInstance = axios.create({
   headers: {'Content-Type': 'application/json'}
 });
 
-axiosInstance.interceptors.request.use(
-  (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -36,18 +25,11 @@ axiosInstance.interceptors.response.use(
           { withCredentials: true }
         );
         
-        const responseData = refreshResponse.data as { token: string };
-        
-        if (refreshResponse.status === 200 && responseData.token) {
-          const token = responseData.token;
-          if (typeof window !== 'undefined') localStorage.setItem('token', token);
-          if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${token}`;
+        if (refreshResponse.status === 200) {
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
           window.location.href = '/auth/login';
         }
         return Promise.reject(refreshError);
