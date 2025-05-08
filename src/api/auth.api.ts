@@ -1,18 +1,6 @@
 import axiosInstance from '../config/axios.config';
 import { LoginRequest, RegisterRequest, UserWithToken, User } from '../types';
 
-// Interface untuk error dengan response
-interface ApiError {
-  response?: {
-    status?: number;
-    data?: {
-      error?: string;
-      message?: string;
-    };
-  };
-  message?: string;
-}
-
 class AuthApi {
   /**
    * Login user dengan email dan password
@@ -21,13 +9,7 @@ class AuthApi {
    */
   async login(data: LoginRequest): Promise<UserWithToken> {
     const response = await axiosInstance.post<UserWithToken>('/auth/login', data);
-    
-    // Simpan token ke localStorage untuk digunakan di interceptor
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
-    
+    // Token dan user disimpan dalam cookie di server
     return response.data;
   }
 
@@ -47,11 +29,7 @@ class AuthApi {
    */
   async logout(): Promise<{ message: string }> {
     const response = await axiosInstance.post<{ message: string }>('/auth/logout');
-    
-    // Hapus token dari localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
+    // Cookie akan dihapus oleh server
     return response.data;
   }
 
@@ -66,25 +44,6 @@ class AuthApi {
       return response.data;
     } catch (error: unknown) {
       console.error('Error getting auth status:', error);
-      
-      // Type assertion untuk mengakses properti error
-      const apiError = error as ApiError;
-      
-      // Jika endpoint tidak tersedia (404), coba cek token dari localStorage
-      if (apiError.response?.status === 404) {
-        console.info('Auth status endpoint not found, attempting fallback to localStorage');
-        try {
-          const token = localStorage.getItem('token');
-          const user = localStorage.getItem('user');
-          
-          if (token && user) {
-            return { user: JSON.parse(user), token };
-          }
-        } catch (localStorageError) {
-          console.error('Error accessing localStorage:', localStorageError);
-        }
-      }
-      
       return null;
     }
   }
@@ -96,11 +55,7 @@ class AuthApi {
   async refreshToken(): Promise<{ token: string }> {
     try {
       const response = await axiosInstance.post<{ token: string }>('/auth/refresh-token');
-      
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
-      
+      // Token akan disimpan sebagai cookie oleh server
       return response.data;
     } catch (error) {
       console.error('Error refreshing token:', error);
