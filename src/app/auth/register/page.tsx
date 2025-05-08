@@ -25,10 +25,8 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import useAuth from '@/hooks/useAuth.hook';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { Role } from '@/types';
 
-// Interface untuk Error dengan response
 interface ApiError {
   response?: {
     data?: {
@@ -88,7 +86,6 @@ export default function RegisterPage() {
       }, 3000);
     } catch (error) {
       console.error('Register error:', error);
-      // Handle error response dari server jika ada
       const apiError = error as ApiError;
       const errorMessage = apiError.response?.data?.error || 'Gagal mendaftar. Silakan coba lagi.';
       setError(errorMessage);
@@ -99,7 +96,7 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <MainLayout>
+      <>
         <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
           <h1 className="text-2xl font-bold text-center mb-6">Pendaftaran Berhasil</h1>
           <Alert className="mb-4">
@@ -113,13 +110,13 @@ export default function RegisterPage() {
             </Link>
           </div>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
+    <>
+      <div className="max-w-md my-15 mx-auto p-6 bg-card rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center mb-6">Daftar</h1>
 
         {error && (
@@ -171,33 +168,6 @@ export default function RegisterPage() {
                 </FormItem>
               )}
             />
-            
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mendaftar Sebagai</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih peran" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={Role.USER}>Pengguna</SelectItem>
-                      <SelectItem value={Role.OWNER_CABANG}>Pemilik Cabang</SelectItem>
-                      <SelectItem value={Role.ADMIN_CABANG}>Admin Cabang</SelectItem>
-                      <SelectItem value={Role.SUPER_ADMIN}>Super Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
@@ -242,6 +212,6 @@ export default function RegisterPage() {
           </p>
         </div>
       </div>
-    </MainLayout>
+    </>
   );
 } 
