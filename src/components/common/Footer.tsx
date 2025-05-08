@@ -4,11 +4,11 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-background border-t py-6 md:py-8">
+    <footer className="w-full bg-background border-t py-2 md:py-4">
       <div className="container flex flex-col md:flex-row justify-between items-center">
         <div className="mb-4 md:mb-0">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} Reservasi Sport Center. Hak Cipta Dilindungi.
+            &copy; {currentYear} Sport Center.
           </p>
         </div>
 

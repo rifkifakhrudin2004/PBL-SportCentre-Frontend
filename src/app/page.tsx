@@ -1,14 +1,28 @@
-'use client';
+"use client";
 
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { branchApi } from '@/api';
-import { Branch } from '@/types';
-import { ArrowRight, Calendar, CheckCircle, Clock, MapPin, Star } from 'lucide-react';
+import { HomeLayout } from "@/components/layout/HomeLayout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import Link from "next/link";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { branchApi } from "@/api";
+import { Branch } from "@/types";
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle,
+  Clock,
+  MapPin,
+  Star,
+} from "lucide-react";
 
 export default function HomePage() {
   const [featuredBranches, setFeaturedBranches] = useState<Branch[]>([]);
@@ -20,16 +34,14 @@ export default function HomePage() {
         const response = await branchApi.getBranches();
         const branches = response.data || [];
         console.log(branches);
-        // Pastikan branches berupa array sebelum menggunakan slice
         if (Array.isArray(branches)) {
-          // Hanya tampilkan maksimal 4 cabang
           setFeaturedBranches(branches.slice(0, 4));
         } else {
-          console.error('branches is not an array:', branches);
+          console.error("branches is not an array:", branches);
           setFeaturedBranches([]);
         }
       } catch (error) {
-        console.error('Error fetching branches:', error);
+        console.error("Error fetching branches:", error);
         setFeaturedBranches([]);
       } finally {
         setIsLoading(false);
@@ -43,43 +55,43 @@ export default function HomePage() {
   const testimonials = [
     {
       id: 1,
-      name: 'Andi Wijaya',
-      role: 'Atlet Badminton',
-      text: 'Aplikasi ini sangat memudahkan saya dalam memesan lapangan badminton. Tidak perlu lagi menelepon atau datang langsung ke tempat. Sangat efisien!',
-      avatar: 'https://i.pravatar.cc/150?img=1',
+      name: "Andi Wijaya",
+      role: "Atlet Badminton",
+      text: "Aplikasi ini sangat memudahkan saya dalam memesan lapangan badminton. Tidak perlu lagi menelepon atau datang langsung ke tempat. Sangat efisien!",
+      avatar: "https://i.pravatar.cc/150?img=1",
       rating: 5,
     },
     {
       id: 2,
-      name: 'Diana Putri',
-      role: 'Pemain Basket Amatir',
-      text: 'Sistem booking yang mudah dan pembayaran yang aman. Saya dan tim basket saya selalu menggunakan aplikasi ini untuk memesan lapangan.',
-      avatar: 'https://i.pravatar.cc/150?img=5',
+      name: "Diana Putri",
+      role: "Pemain Basket Amatir",
+      text: "Sistem booking yang mudah dan pembayaran yang aman. Saya dan tim basket saya selalu menggunakan aplikasi ini untuk memesan lapangan.",
+      avatar: "https://i.pravatar.cc/150?img=5",
       rating: 4,
     },
     {
       id: 3,
-      name: 'Budi Santoso',
-      role: 'Penggemar Futsal',
-      text: 'Sangat puas dengan layanan Sport Center. Banyak pilihan lapangan berkualitas dengan harga yang bersaing. Recommended!',
-      avatar: 'https://i.pravatar.cc/150?img=3',
+      name: "Budi Santoso",
+      role: "Penggemar Futsal",
+      text: "Sangat puas dengan layanan Sport Center. Banyak pilihan lapangan berkualitas dengan harga yang bersaing. Recommended!",
+      avatar: "https://i.pravatar.cc/150?img=3",
       rating: 5,
     },
   ];
 
   return (
-    <MainLayout>
+    <HomeLayout>
       {/* Hero Section */}
-      <section className="relative py-24 overflow-hidden rounded-2xl">
+      <section className="relative py-24 overflow-hidden w-full h-screen flex items-center justify-center">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/60 z-10"></div>
         
         {/* Background image */}
         <div className="absolute inset-0">
-          <Image 
-            src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1936&q=80" 
-            alt="Sport Center" 
-            fill 
+          <Image
+            src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1936&q=80"
+            alt="Sport Center"
+            fill
             className="object-cover"
             priority
           />
@@ -87,20 +99,28 @@ export default function HomePage() {
         
         <div className="container mx-auto text-center relative z-20">
           <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 text-white drop-shadow-md">
-            Reservasi Lapangan <br />Jadi Lebih Mudah
+            Reservasi Lapangan <br />
+            Jadi Lebih Mudah
           </h1>
           <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto drop-shadow">
-            Temukan dan pesan lapangan olahraga favorit Anda dengan cepat dan mudah.
-            Bayar online dan dapatkan konfirmasi instan.
+            Temukan dan pesan lapangan olahraga favorit Anda dengan cepat dan
+            mudah. Bayar online dan dapatkan konfirmasi instan.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/branches">
-              <Button size="lg" className="bg-white text-primary hover:bg-white/90 hover:text-primary transition-colors">
+              <Button
+                size="lg"
+                className="bg-white text-primary hover:bg-white/90 hover:text-primary transition-colors"
+              >
                 Jelajahi Cabang
               </Button>
             </Link>
             <Link href="/fields">
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/20">
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-transparent text-white border-white hover:bg-white/20"
+              >
                 Lihat Lapangan
               </Button>
             </Link>
@@ -116,7 +136,7 @@ export default function HomePage() {
               <div className="bg-primary/10 p-3 rounded-full mb-4">
                 <MapPin className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold mb-1">10+ Cabang</h3>
+              <h3 className="text-2xl font-bold mb-1">{featuredBranches.length} Cabang</h3>
               <p className="text-muted-foreground">Tersebar di berbagai kota</p>
             </div>
             
@@ -139,7 +159,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Branches */}
+      {/* Branches List */}
       <section className="py-16">
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-10">
@@ -163,25 +183,33 @@ export default function HomePage() {
           ) : featuredBranches.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {featuredBranches.map((branch) => (
-                <Card key={branch.id} className="h-full overflow-hidden group hover:shadow-md transition-all">
+                <Card
+                  key={branch.id}
+                  className="h-full overflow-hidden group hover:shadow-md transition-all"
+                >
                   <div className="relative h-48 overflow-hidden">
-                    <div 
-                      className="h-full w-full bg-muted group-hover:scale-105 transition-transform duration-300"
-                      style={{
-                        backgroundImage: branch.imageUrl
-                          ? `url(${branch.imageUrl})`
-                          : 'none',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }}
-                    />
+                    <div className="h-full w-full bg-muted group-hover:scale-105 transition-transform duration-300">
+                      <img
+                        src={branch.imageUrl || "images/img_not_found.png"}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "images/img_not_found.png";
+                          target.className = "h-full w-full object-contain";
+                        }}
+                        alt={branch.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                     <div className="absolute top-3 right-3">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        branch.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {branch.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          branch.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {branch.status === "active" ? "Aktif" : "Tidak Aktif"}
                       </span>
                     </div>
                   </div>
@@ -210,11 +238,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Advantages */}
       <section className="py-16 bg-muted/30 rounded-2xl">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold mb-10 text-center">Mengapa Memilih Kami?</h2>
-          
+          <h2 className="text-3xl font-bold mb-10 text-center">
+            Mengapa Memilih Kami?
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="bg-background border-0 shadow-sm hover:shadow-md transition-shadow">
               <CardHeader>
@@ -229,15 +259,21 @@ export default function HomePage() {
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Pesan dalam hitungan menit</span>
+                    <span className="text-muted-foreground">
+                      Pesan dalam hitungan menit
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Tanpa perlu antre atau telepon</span>
+                    <span className="text-muted-foreground">
+                      Tanpa perlu antre atau telepon
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Akses kapan saja dan dimana saja</span>
+                    <span className="text-muted-foreground">
+                      Akses kapan saja dan dimana saja
+                    </span>
                   </li>
                 </ul>
               </CardContent>
@@ -269,15 +305,21 @@ export default function HomePage() {
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Multiple metode pembayaran</span>
+                    <span className="text-muted-foreground">
+                      Multiple metode pembayaran
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Proses pembayaran aman & terpercaya</span>
+                    <span className="text-muted-foreground">
+                      Proses pembayaran aman & terpercaya
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Notifikasi pembayaran real-time</span>
+                    <span className="text-muted-foreground">
+                      Notifikasi pembayaran real-time
+                    </span>
                   </li>
                 </ul>
               </CardContent>
@@ -302,22 +344,28 @@ export default function HomePage() {
                       />
                     </svg>
                   </div>
-                </div>  
+                </div>
                 <CardTitle className="text-center">Kualitas Terjamin</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Lapangan terverifikasi kualitasnya</span>
+                    <span className="text-muted-foreground">
+                      Lapangan terverifikasi kualitasnya
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Review dari pengguna lain</span>
+                    <span className="text-muted-foreground">
+                      Review dari pengguna lain
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">Fasilitas lengkap dan nyaman</span>
+                    <span className="text-muted-foreground">
+                      Fasilitas lengkap dan nyaman
+                    </span>
                   </li>
                 </ul>
               </CardContent>
@@ -326,19 +374,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonial Section */}
+      {/* Reviews */}
       <section className="py-16">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold mb-10 text-center">Kata Mereka Tentang Kami</h2>
-          
+          <h2 className="text-3xl font-bold mb-10 text-center">
+            Kata Mereka Tentang Kami
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {testimonials.map((testimonial) => (
-              <Card key={testimonial.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+              <Card
+                key={testimonial.id}
+                className="border-0 shadow-sm hover:shadow-md transition-shadow"
+              >
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 rounded-full overflow-hidden">
-                        <Image 
+                        <Image
                           src={testimonial.avatar}
                           alt={testimonial.name}
                           width={48}
@@ -348,7 +401,9 @@ export default function HomePage() {
                       </div>
                       <div>
                         <h4 className="font-medium">{testimonial.name}</h4>
-                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {testimonial.role}
+                        </p>
                       </div>
                     </div>
                     <div className="flex">
@@ -357,8 +412,8 @@ export default function HomePage() {
                           key={i}
                           className={`w-4 h-4 ${
                             i < testimonial.rating
-                              ? 'text-yellow-400 fill-yellow-400'
-                              : 'text-gray-300'
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-gray-300"
                           }`}
                         />
                       ))}
@@ -366,7 +421,9 @@ export default function HomePage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground italic">&quot;{testimonial.text}&quot;</p>
+                  <p className="text-muted-foreground italic">
+                    &quot;{testimonial.text}&quot;
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -378,19 +435,29 @@ export default function HomePage() {
       <section className="py-16 mb-6">
         <div className="container mx-auto">
           <div className="bg-primary rounded-2xl p-8 md:p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Siap Untuk Bermain?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+              Siap Untuk Bermain?
+            </h2>
             <p className="text-white/80 max-w-2xl mx-auto mb-8">
-              Jadikan pengalaman olahraga Anda lebih menyenangkan dengan layanan reservasi kami.
-              Daftar sekarang dan nikmati kemudahan pemesanan lapangan olahraga.
+              Jadikan pengalaman olahraga Anda lebih menyenangkan dengan layanan
+              reservasi kami. Daftar sekarang dan nikmati kemudahan pemesanan
+              lapangan olahraga.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth/register">
-                <Button size="lg" className="bg-white text-primary hover:bg-white/90">
+                <Button
+                  size="lg"
+                  className="bg-white text-primary hover:bg-white/90"
+                >
                   Daftar Sekarang
                 </Button>
               </Link>
               <Link href="/branches">
-                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/20">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="bg-transparent text-white border-white hover:bg-white/20 hover:text-white"
+                >
                   Jelajahi Lapangan
                 </Button>
               </Link>
@@ -398,6 +465,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-    </MainLayout>
+    </HomeLayout>
   );
 }
