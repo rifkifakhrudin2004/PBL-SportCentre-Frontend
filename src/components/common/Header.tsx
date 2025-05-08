@@ -197,7 +197,7 @@ export function Header() {
                 <Button 
                   variant={pathname === "/" ? (scrolled ? "ghost" : "outline") : "ghost"}
                   size="sm"
-                  className={pathname === "/" && !scrolled ? "text-white border-white/30 hover:bg-white/10 hover:text-white" : ""}
+                  className={pathname === "/" && !scrolled ? "text-white border-muted/20 bg-black/10 hover:bg-black/20 hover:text-white" : ""}
                 >
                   Masuk
                 </Button>
