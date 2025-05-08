@@ -11,15 +11,34 @@ export const axiosInstance = axios.create({
   headers: {'Content-Type': 'application/json'}
 });
 
+// Tambahkan log sederhana untuk debugging
+axiosInstance.interceptors.request.use(
+  (config) => {
+    // console.log(`Request to: ${config.url}`);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Jangan coba refresh token jika error dari endpoint auth/status atau auth/login
+    // atau jika request sudah pernah dicoba refresh
+    if (error.response?.status === 401 && 
+        !originalRequest._retry && 
+        !originalRequest.url?.includes('auth/status') &&
+        !originalRequest.url?.includes('auth/login') &&
+        !originalRequest.url?.includes('auth/refresh-token')) {
+      
       originalRequest._retry = true;
       
       try {
+        // console.log('Mencoba refresh token...');
         const refreshResponse = await axios.post(
           `${BASE_URL}/auth/refresh-token`,
           {},
@@ -27,6 +46,7 @@ axiosInstance.interceptors.response.use(
         );
         
         if (refreshResponse.status === 200) {
+          // console.log('Token berhasil diperbarui');
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
