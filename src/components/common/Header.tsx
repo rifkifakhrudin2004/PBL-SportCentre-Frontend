@@ -76,11 +76,13 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 z-50 w-full ${
-        pathname === "/" ? "bg-skye/15" : "bg-skye"
-      } text-white backdrop-blur-sm transition-all duration-300 ${
-        scrolled ? "bg-skye/85" : "border-transparent"
-      }`}
+      className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ease-in-out ${
+        pathname === "/" 
+          ? scrolled 
+            ? "bg-background/90 shadow-sm border-b border-border" 
+            : "bg-transparent"
+          : "bg-background/90 shadow-sm border-b border-border"
+      } backdrop-blur-sm`}
     >
       <div className="container px-4 sm:px-6 lg:px-8 mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
@@ -94,7 +96,9 @@ export function Header() {
                 <path d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm4.75-6a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm0 3a.75.75 0 0 0 0 1.5h5.625a.75.75 0 0 0 0-1.5H7zm0 3a.75.75 0 0 0 0 1.5h5.625a.75.75 0 0 0 0-1.5H7zm0 3a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm9-3a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.75-.75zm.75 3a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm-5.5-12a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5z" />
               </svg>
             </div>
-            <span className="font-bold text-xl">Sport Center</span>
+            <span className={`font-bold text-xl ${
+              pathname === "/" && !scrolled ? "text-white" : "text-foreground"
+            }`}>Sport Center</span>
           </Link>
         </div>
 
@@ -105,11 +109,19 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-2 text-white rounded-md text-sm font-medium flex items-center gap-1.5 transition-colors
+                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 transition-colors
                   ${
                     isActive(link.href)
-                      ? "text-primary"
-                      : "text-white/50 hover:hover:text-white"
+                      ? pathname === "/" && !scrolled
+                        ? "bg-white/20 text-white" 
+                        : pathname === "/" && scrolled
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-primary/10 text-primary"
+                      : pathname === "/" && !scrolled
+                        ? "text-white hover:text-white/80"
+                        : pathname === "/" && scrolled
+                          ? "text-foreground hover:text-foreground/80"
+                          : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 {link.icon}
@@ -125,11 +137,19 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  className={`flex items-center bg-transparent hover:bg-skye-hover gap-2 ${
-                    scrolled ? "bg-transparent" : "hover:bg-skye/25"
+                  className={`flex items-center bg-transparent hover:bg-muted gap-2 ${
+                    pathname === "/" && !scrolled 
+                      ? "text-white hover:text-white/80 hover:bg-white/10" 
+                      : pathname === "/" && scrolled
+                        ? "text-foreground hover:bg-muted/25"
+                        : "text-foreground"
+                  } ${
+                    scrolled ? "bg-transparent" : "hover:bg-muted/25"
                   }`}
                 >
-                  <div className="h-7 w-7 rounded-full text-white bg-primary/10 flex items-center justify-center text-xs font-semibold">
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold ${
+                    pathname === "/" && !scrolled ? "bg-white/20" : "bg-primary/10"
+                  }`}>
                     {user?.name?.charAt(0) || "U"}
                   </div>
                   <span className="text-sm font-medium max-w-[120px] truncate">
@@ -174,12 +194,20 @@ export function Header() {
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/auth/login">
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant={pathname === "/" ? (scrolled ? "ghost" : "outline") : "ghost"}
+                  size="sm"
+                  className={pathname === "/" && !scrolled ? "text-white border-muted/20 bg-black/10 hover:bg-black/20 hover:text-white" : ""}
+                >
                   Masuk
                 </Button>
               </Link>
               <Link href="/auth/register">
-                <Button variant="default" size="sm">
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className={pathname === "/" && !scrolled ? "bg-white text-black hover:bg-white/90" : ""}
+                >
                   Daftar
                 </Button>
               </Link>
@@ -191,7 +219,11 @@ export function Header() {
         <div className="md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`${pathname === "/" && !scrolled ? "text-white" : pathname === "/" && scrolled ? "text-foreground" : "text-foreground"}`}
+              >
                 <Menu />
               </Button>
             </SheetTrigger>
