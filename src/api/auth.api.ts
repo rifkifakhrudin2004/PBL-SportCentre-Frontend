@@ -1,5 +1,6 @@
 import axiosInstance from '../config/axios.config';
 import { LoginRequest, RegisterRequest, UserWithToken, User } from '../types';
+import { hasAuthCookie } from '@/utils/cookie';
 
 class AuthApi {
   /**
@@ -39,7 +40,10 @@ class AuthApi {
    */
   async getAuthStatus(): Promise<UserWithToken | null> {
     try {
-      // Coba endpoint status
+      if (!hasAuthCookie()) {
+        return null; 
+      }
+
       const response = await axiosInstance.get<UserWithToken>('/auth/status');
       return response.data;
     } catch (error: unknown) {

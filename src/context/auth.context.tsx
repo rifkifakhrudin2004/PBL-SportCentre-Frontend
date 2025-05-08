@@ -3,6 +3,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '@/types';
 import { authApi } from '@/api/auth.api';
+import { hasAuthCookie } from '@/utils/cookie';
+
+// Interface untuk error Axios
+interface AxiosErrorResponse {
+  response?: {
+    status?: number;
+  };
+}
 
 export interface AuthContextType {
   user: User | null;
@@ -14,7 +22,6 @@ export interface AuthContextType {
   updateUserProfile: (updatedUser: User) => void;
 }
 
-// Create context with default values
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
@@ -35,12 +42,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initAuth = async () => {
       setIsLoading(true);
       try {
-        const authData = await authApi.getAuthStatus();
-        if (authData && authData.user) {
-          setUser(authData.user);
+        if (hasAuthCookie()) {
+          const authData = await authApi.getAuthStatus();
+          if (authData && authData.user) {
+            setUser(authData.user);
+          }
+        } else {
+          setUser(null);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+
+        const axiosError = error as AxiosErrorResponse;
+        if (axiosError.response?.status !== 401) {
+          console.error('Error initializing auth:', error);
+        }
+        // Reset user ke null untuk memastikan keadaan tidak terautentikasi
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
