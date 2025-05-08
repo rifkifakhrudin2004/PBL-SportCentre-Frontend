@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 
+// Gunakan relative URL untuk memanfaatkan proxy di next.config.ts -chatgpt
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export const axiosInstance = axios.create({
