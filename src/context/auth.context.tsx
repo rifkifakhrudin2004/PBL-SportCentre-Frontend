@@ -42,6 +42,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initAuth = async () => {
       setIsLoading(true);
       try {
+        // Log status cookie untuk debugging
+        console.log("Is logged in cookie exists:", hasAuthCookie());
+        
         if (hasAuthCookie()) {
           const authData = await authApi.getAuthStatus();
           if (authData && authData.user) {

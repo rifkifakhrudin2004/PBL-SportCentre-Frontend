@@ -44,6 +44,7 @@ class AuthApi {
         return null; 
       }
 
+      // Cookie auth_token (httpOnly) akan dikirim otomatis oleh browser
       const response = await axiosInstance.get<UserWithToken>('/auth/status');
       return response.data;
     } catch (error: unknown) {
