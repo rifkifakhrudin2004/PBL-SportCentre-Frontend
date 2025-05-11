@@ -23,7 +23,8 @@ export const hasCookie = (name: string): boolean => {
  * @returns boolean true jika ada cookie auth, false jika tidak
  */
 export const hasAuthCookie = (): boolean => {
-  return hasCookie('auth_token') || hasCookie('refresh_token');
+  // Gunakan cookie penanda is_logged_in yang bisa diakses JavaScript
+  return hasCookie('is_logged_in');
 };
 
 const cookieUtils = {
