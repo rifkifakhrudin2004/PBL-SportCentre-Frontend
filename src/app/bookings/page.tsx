@@ -11,6 +11,7 @@ import { branchApi, fieldApi } from "@/api";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth.context";
 
 const bookingSchema = z.object({
   fieldId: z.number(),
@@ -71,8 +72,8 @@ export default function BookingsPage() {
       endTime: "",
     },
   });
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const userId = user?.id;
+  const user = useAuth();
+  const userId = user?.user?.id || 0; 
 
   useEffect(() => {
     const fetchAvailability = async () => {
