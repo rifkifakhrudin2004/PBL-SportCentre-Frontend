@@ -19,9 +19,9 @@ class FieldApi {
    * Dapatkan semua lapangan
    * @returns Promise dengan array data lapangan
    */
-  async getAllFields(): Promise<Field[]> {
-    const response = await axiosInstance.get<{ fields: Field[] }>('/fields');
-    return response.data.fields;
+  async getAllFields(): Promise<FieldResponseWithMeta> {
+    const response = await axiosInstance.get<FieldResponseWithMeta>('/fields');
+    return response.data;
   }
 
   /**
