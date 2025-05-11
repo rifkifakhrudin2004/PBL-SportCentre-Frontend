@@ -1,17 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { useState, useEffect, useCallback } from "react";
 import { bookingApi } from "@/api/booking.api";
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import { BookingWithPayment, Field, Branch, Booking } from "@/types";
 import { branchApi, fieldApi } from "@/api";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth.context";
+import { format } from "date-fns";
+import { initSocket, joinFieldAvailabilityRoom, subscribeToFieldAvailability, requestAvailabilityUpdate } from "@/config/socket.config";
+
+// Komponen-komponen terpisah untuk halaman booking
+import TimeSlotSelector from "@/components/booking/TimeSlotSelector";
+import BookingHeader from "@/components/booking/BookingHeader";
+import BookingForm from "@/components/booking/BookingForm";
+import LoadingState from "@/components/booking/LoadingState";
+import ErrorState from "@/components/booking/ErrorState";
 
 const bookingSchema = z.object({
   fieldId: z.number(),
@@ -28,6 +34,7 @@ type BookingRequest = {
   startTime: string;
   endTime: string;
 };
+
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<BookingWithPayment[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
@@ -44,7 +51,11 @@ export default function BookingsPage() {
   const [selectedFieldName, setSelectedFieldName] =
     useState<String>("Lapangan");
   const [selectedStartTime, setSelectedStartTime] = useState<string>("-");
+  const [bookedTimeSlots, setBookedTimeSlots] = useState<{[key: number]: string[]}>({});
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  
+  // Pindahkan array times ke luar agar tidak dibuat ulang setiap render
   const times = [
     "08:00",
     "09:00",
@@ -63,6 +74,7 @@ export default function BookingsPage() {
     "22:00",
     "23:00",
   ];
+  
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
@@ -72,67 +84,179 @@ export default function BookingsPage() {
       endTime: "",
     },
   });
+  
   const user = useAuth();
   const userId = user?.user?.id || 0; 
 
+  // Fungsi untuk memperbarui data ketersediaan lapangan
+  const refreshAvailability = useCallback(async () => {
+    if (!selectedBranch || !selectedDate) return;
+    
+    setRefreshing(true);
+    
+    try {
+      console.log("Manually refreshing availability data for date:", selectedDate);
+      
+      // Hapus cache untuk memastikan data di-refresh
+      sessionStorage.removeItem(`${selectedBranch}_${selectedDate}`);
+      
+      // Request update melalui socket.io
+      requestAvailabilityUpdate(selectedDate, selectedBranch);
+      
+      // Fallback ke API REST jika socket tidak berfungsi
+      const bookedSlots = await fieldApi.fetchBookedTimeSlots(
+        selectedBranch,
+        selectedDate,
+        fields,
+        times
+      );
+      
+      setBookedTimeSlots(bookedSlots);
+    } catch (error) {
+      console.error("Error refreshing availability data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [selectedBranch, selectedDate, fields, times]);
+
+  // Mengambil data cabang dan lapangan
   useEffect(() => {
-    const fetchAvailability = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
+      
       try {
-        const bookings = await bookingApi.getUserBookings();
-        console.log("data booking", fields);
-        setBookings(Array.isArray(bookings) ? bookings : []);
-      } catch (error) {
-        console.error("Error fetching user bookings:", error);
-        setError("Gagal memuat daftar booking. Silakan coba lagi nanti.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchBranches = async () => {
-      try {
+        // Ambil data cabang
         const response = await branchApi.getBranches();
         const branches = response.data || [];
-        console.log(branches);
-        if (Array.isArray(branches)) {
+        
+        if (Array.isArray(branches) && branches.length > 0) {
           setSelectedBranch(branches[0].id);
           setSelectedBranchName(branches[0].name);
           setBranches(branches);
         } else {
-          console.error("branches is not an array:", branches);
+          console.error("branches is not an array or empty:", branches);
           setBranches([]);
         }
-      } catch (error) {
-        console.error("Error fetching branches:", error);
-        setBranches([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    const fetchFields = async () => {
-      setLoading(true);
-      setError(null);
-      try {
+        
+        // Ambil data lapangan
         const fields = await fieldApi.getAllFields();
         setFields(Array.isArray(fields) ? fields : []);
+        
+        setLoading(false);
       } catch (error) {
-        console.error("Error fetching user bookings:", error);
-        setError("Gagal memuat lapangan. Silakan coba lagi nanti.");
-      } finally {
+        console.error("Error fetching initial data:", error);
+        setError("Gagal memuat data. Silakan coba lagi nanti.");
         setLoading(false);
       }
     };
 
-    fetchAvailability();
-    fetchBranches();
-    fetchFields();
+    fetchData();
+    
+    // Inisialisasi socket.io
+    try {
+      const socket = initSocket();
+      console.log('Socket initialized in booking page');
+    } catch (error) {
+      console.error('Error initializing socket:', error);
+    }
+    
   }, []);
 
+  // Setup socket.io subscription untuk update real-time
+  useEffect(() => {
+    if (selectedDate && selectedBranch) {
+      // Gabung room berdasarkan tanggal dan cabang
+      joinFieldAvailabilityRoom(selectedBranch, selectedDate);
+      
+      // Subscribe untuk pembaruan ketersediaan lapangan
+      const unsubscribe = subscribeToFieldAvailability((data) => {
+        console.log('Received field availability update from socket.io:', data);
+        // Update bookedTimeSlots berdasarkan data dari server
+        if (data && Array.isArray(data)) {
+          const newBookedSlots: {[key: number]: string[]} = {};
+          
+          // Proses data dari socket
+          data.forEach((fieldData: any) => {
+            if (fieldData.fieldId) {
+              const fieldId = fieldData.fieldId;
+              const availableTimeSlots = fieldData.availableTimeSlots || [];
+              
+              // Konversi slot waktu tersedia menjadi jam
+              const availableHours = new Set<string>();
+              availableTimeSlots.forEach((slot: any) => {
+                const startTime = new Date(slot.start);
+                const endTime = new Date(slot.end);
+                
+                for (let hour = startTime.getHours(); hour < endTime.getHours(); hour++) {
+                  availableHours.add(`${hour.toString().padStart(2, '0')}:00`);
+                }
+              });
+              
+              // Cari jam yang tidak tersedia (terpesan)
+              const bookedHours = times.filter(time => !Array.from(availableHours).includes(time));
+              newBookedSlots[fieldId] = bookedHours;
+            }
+          });
+          
+          setBookedTimeSlots(newBookedSlots);
+        }
+      });
+      
+      // Set up interval untuk meminta pembaruan data setiap 30 detik
+      const refreshInterval = setInterval(() => {
+        requestAvailabilityUpdate(selectedDate, selectedBranch);
+      }, 30000); // 30 detik
+      
+      // Cleanup subscription dan interval saat unmount atau dependency berubah
+      return () => {
+        unsubscribe();
+        clearInterval(refreshInterval);
+      };
+    }
+  }, [selectedDate, selectedBranch, times]);
+
+  // Mengambil data slot waktu yang terpesan
+  useEffect(() => {
+    const getBookedTimeSlots = async () => {
+      if (selectedBranch && selectedDate && fields.length > 0) {
+        console.log("Getting booked time slots for date:", selectedDate);
+        
+        const bookedSlots = await fieldApi.fetchBookedTimeSlots(
+          selectedBranch,
+          selectedDate,
+          fields,
+          times
+        );
+        setBookedTimeSlots(bookedSlots);
+      }
+    };
+
+    getBookedTimeSlots();
+    
+    // Hapus times dari dependency array karena sekarang stabil dan tidak berubah
+  }, [selectedBranch, selectedDate, fields]);
+
+  // Handler untuk form submission
   const onSubmit = async (formData: BookingFormValues) => {
     setLoading(true);
     setError(null);
+
+    if (!selectedField || selectedStartTime === "-" || !formData.endTime) {
+      setError("Silakan pilih lapangan dan waktu terlebih dahulu");
+      setLoading(false);
+      return;
+    }
+
+    // Pastikan waktu mulai kurang dari waktu selesai
+    const startHour = parseInt(selectedStartTime.split(":")[0], 10);
+    const endHour = parseInt(formData.endTime.split(":")[0], 10);
+
+    if (startHour >= endHour) {
+      setError("Waktu selesai harus lebih besar dari waktu mulai");
+      setLoading(false);
+      return;
+    }
 
     const dataToSend: BookingRequest = {
       userId: userId,
@@ -143,22 +267,27 @@ export default function BookingsPage() {
     };
 
     try {
-      await bookingApi.createBooking(dataToSend);
-      console.log("Booking Berhasil");
-      console.log("User after booking", localStorage.getItem("user"));
-      router.push("/bookings");
+      const bookingResult = await bookingApi.createBooking(dataToSend);
+      console.log("Booking Berhasil:", bookingResult);
+      
+      // Hapus cache ketersediaan untuk memastikan data di-refresh di halaman selanjutnya
+      const cacheKey = `${selectedBranch}_${selectedDate}`;
+      sessionStorage.removeItem(cacheKey);
+      
+      // Refresh ketersediaan lapangan
+      refreshAvailability();
+      
+      // Arahkan ke halaman riwayat booking
+      router.push("/bookings/history");
     } catch (error) {
       console.error("Booking error:", error);
-      setError("Data booking salah. Silakan coba lagi." + error);
+      setError("Data booking salah. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
   };
 
-  const filterdFields = fields.filter(
-    (field) => field.branchId === selectedBranch
-  );
-
+  // Event handlers
   const branchChanged = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const branchId = Number(e.target.value);
     setSelectedBranch(branchId);
@@ -187,228 +316,73 @@ export default function BookingsPage() {
     }
   };
 
+  // Render states
   if (loading) {
-    return (
-      <div className="container justify-center items-center text-center mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Memuat Halaman</h1>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Booking</h1>
-        <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-lg">
-          <p>{error}</p>
-        </div>
-        <Button onClick={() => window.location.reload()}>Coba Lagi</Button>
-      </div>
-    );
+    return <ErrorState error={error} />;
   }
 
+  // Main render
   return (
     <div className="container mx-auto py-8 px-4 ">
-      <h1 className="text-3xl text-center mt-5 font-bold mb-6">
-        Jadwal Booking
-      </h1>
-      <section className="flex flex-col mt-5">
-        <div className="flex justify-between items-center mb-0 bg-black text-white py-2.5 px-8">
-          <div>
-            <button className="flex flex-row " onClick={showPicker}>
-              {selectedDate
-                ? format(new Date(selectedDate), "dd MMMM yyyy", { locale: id })
-                : "Pilih Tanggal"}
-              <span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M12 14.975q-.2 0-.375-.062T11.3 14.7l-4.6-4.6q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l3.9 3.9l3.9-3.9q.275-.275.7-.275t.7.275t.275.7t-.275.7l-4.6 4.6q-.15.15-.325.213t-.375.062"
-                  />
-                </svg>
-              </span>
-            </button>
-            <input
-              id="hiddenDateInput"
-              type="date"
-              value={selectedDate}
-              onChange={dateValueHandler}
-              onKeyDown={(e) => e.preventDefault()}
-              className="absolute opacity-0 w-0 h-0"
-            />
-          </div>
-          <div>
-            <select
-              name="branch"
-              id="branch"
-              onChange={branchChanged}
-              value={selectedBranch}
-            >
-              {branches.map((branch) => (
-                <option
-                  key={branch.id}
-                  value={branch.id}
-                  className="text-black"
-                >
-                  {branch.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-1 border border-gray-300 p-1">
-          {filterdFields.length > 0 ? (
-            filterdFields.map((field) => (
-              <div
-                key={field.id}
-                className="w-full sm:w-[48%] md:w-[20%] border border-gray-500 overflow-hidden shadow"
-              >
-                <div className="bg-gray-200 text-center py-2 font-semibold">
-                  {field.name}
-                </div>
-                <table className="table-fixed border-collapse w-full text-sm">
-                  <tbody>
-                    {times.map((time, index) => (
-                      <tr key={index}>
-                        <td className="w-[30%] text-center border border-gray-300 px-2 py-1">
-                          {time}
-                        </td>
-                        <td className="w-[70%] border border-gray-300 p-0">
-                          <div className="relative">
-                            <input
-                              type="radio"
-                              name="bookingTime"
-                              value={`${time}|${field.id}|${field.name}`}
-                              onChange={selectTimeHandle}
-                              id={`booking-${field.id}-${time}`}
-                              className="peer hidden"
-                              disabled={field.status !== "available"}
-                            />
-                            <label
-                              htmlFor={`booking-${field.id}-${time}`}
-                              className={`
-                                            flex items-center gap-2 px-2 py-1 transition-colors
-                                            ${
-                                              field.status === "available"
-                                                ? "bg-green-100 hover:bg-green-200 cursor-pointer"
-                                                : ""
-                                            }
-                                            ${
-                                              field.status === "booked"
-                                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                                : ""
-                                            }
-                                            ${
-                                              field.status === "maintenance"
-                                                ? "bg-yellow-100 cursor-not-allowed"
-                                                : ""
-                                            }
-                                            ${
-                                              field.status === "closed"
-                                                ? "bg-red-300 text-white cursor-not-allowed"
-                                                : ""
-                                            }
-                                            peer-checked:bg-green-500 peer-checked:hover:bg-green-500
-                                        `}
-                            >
-                              <span className="capitalize">{field.status}</span>
-                            </label>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl text-center font-bold">
+          Jadwal Booking
+        </h1>
+        <button 
+          onClick={refreshAvailability}
+          disabled={refreshing}
+          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center gap-2"
+        >
+          {refreshing ? (
+            <>
+              <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Memperbarui...</span>
+            </>
           ) : (
-            <div className="w-full text-center text-red-500 font-semibold">
-              Cabang Belum Memiliki Lapangan
-            </div>
+            <>
+              <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Perbarui Ketersediaan</span>
+            </>
           )}
-        </div>
+        </button>
+      </div>
+      <section className="flex flex-col mt-5">
+        <BookingHeader
+          selectedDate={selectedDate}
+          selectedBranch={selectedBranch}
+          branches={branches}
+          dateValueHandler={dateValueHandler}
+          branchChanged={branchChanged}
+          showPicker={showPicker}
+        />
+        
+        <TimeSlotSelector
+          fields={fields}
+          times={times}
+          selectedBranch={selectedBranch}
+          bookedTimeSlots={bookedTimeSlots}
+          selectTimeHandle={selectTimeHandle}
+        />
       </section>
 
       <section className="mt-8">
-        <div className="max-w-xl mx-auto bg-white shadow-lg rounded-xl p-6 border border-gray-200">
-          <h2 className="text-xl font-semibold text-center mb-2">
-            Pesanan Anda
-          </h2>
-          <div className="mb-6 text-center">
-            <h4 className="text-lg font-medium text-black">
-              Lapangan{" "}
-              {selectedFieldName === "Lapangan"
-                ? "Belum Dipilih"
-                : selectedFieldName}
-            </h4>
-            <p className="text-black">
-              Cabang{" "}
-              {selectedBranchName === "Cabang"
-                ? "Pilih Cabang"
-                : selectedBranchName}
-            </p>
-          </div>
-
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            method="POST"
-            className="space-y-5"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="startTime"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Jam Mulai:
-                </label>
-                <input
-                  type="text"
-                  name="startTime"
-                  value={selectedStartTime}
-                  disabled
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="endTime"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Jam Selesai:
-                </label>
-                <select
-                  id="endTime"
-                  {...form.register("endTime")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
-                >
-                  {times.map((time, index) => (
-                    <option key={index} value={time}>
-                      {time}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <button
-                type="submit"
-                className="bg-primary hover:bg-primary/80 text-white font-semibold py-2 px-6 rounded-lg transition duration-200"
-              >
-                Booking
-              </button>
-            </div>
-          </form>
-        </div>
+        <BookingForm
+          selectedFieldName={selectedFieldName}
+          selectedBranchName={selectedBranchName}
+          selectedStartTime={selectedStartTime}
+          times={times}
+          form={form}
+          onSubmit={onSubmit}
+        />
       </section>
     </div>
   );

@@ -21,7 +21,25 @@ class BookingApi {
    */
   async getUserBookings(): Promise<Booking[]> {
     try {
-      const response = await axiosInstance.get<BookingResponseWithMeta | { bookings: Booking[] } | Booking[]>('/user/bookings');
+      // Mendapatkan ID user dari localStorage
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        console.error('User tidak ditemukan di localStorage');
+        return [];
+      }
+      
+      const user = JSON.parse(userStr);
+      const userId = user?.id;
+      
+      if (!userId) {
+        console.error('User ID tidak ditemukan');
+        return [];
+      }
+      
+      // Gunakan endpoint yang benar sesuai dengan backend
+      const response = await axiosInstance.get<BookingResponseWithMeta | { bookings: Booking[] } | Booking[]>(
+        `/users/${userId}/bookings`
+      );
       
       // Handle format respons yang berbeda-beda
       if (response.data && typeof response.data === 'object') {
