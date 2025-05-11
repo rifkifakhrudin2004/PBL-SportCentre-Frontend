@@ -79,7 +79,7 @@ export function Header() {
       className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ease-in-out ${
         pathname === "/" 
           ? scrolled 
-            ? "bg-background/90 shadow-sm border-b border-border" 
+            ? "bg-background/90 shadow-sm" 
             : "bg-transparent"
           : "bg-background/90 shadow-sm border-b border-border"
       } backdrop-blur-sm`}
