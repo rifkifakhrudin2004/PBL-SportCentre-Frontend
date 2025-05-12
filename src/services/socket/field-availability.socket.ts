@@ -1,4 +1,22 @@
-import { getSocket, joinRoom, leaveRoom } from '@/config/socket.config';
+import { getSocket, joinRoom } from '@/config/socket.config';
+import { FieldStatus } from '@/types/field.types';
+
+/**
+ * Struktur data untuk ketersediaan lapangan
+ */
+export interface FieldAvailabilityData {
+  date?: string;
+  branchId?: number;
+  fields: {
+    id: number;
+    name: string;
+    status: FieldStatus;
+    availableHours?: {
+      hour: number;
+      isAvailable: boolean;
+    }[];
+  }[];
+}
 
 /**
  * Gabung ke room untuk pembaruan ketersediaan lapangan
@@ -31,11 +49,11 @@ export const requestAvailabilityUpdate = (date?: string, branchId?: number) => {
  * @param callback - Fungsi yang akan dipanggil saat ada pembaruan
  * @returns Fungsi untuk berhenti berlangganan
  */
-export const subscribeToFieldAvailability = (callback: (data: any) => void) => {
+export const subscribeToFieldAvailability = (callback: (data: FieldAvailabilityData) => void) => {
   const socket = getSocket();
   if (!socket) return () => {};
 
-  const handleUpdate = (data: any) => {
+  const handleUpdate = (data: FieldAvailabilityData) => {
     console.log('Received field availability update:', data);
     callback(data);
   };

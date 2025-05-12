@@ -71,7 +71,7 @@ export const getSocket = (): Socket | null => {
  * @param roomId - ID room yang akan dimasuki
  * @param data - Data tambahan yang dikirim saat join room
  */
-export const joinRoom = (roomId: string, data?: any) => {
+export const joinRoom = (roomId: string, data?: Record<string, unknown>) => {
   const socket = getSocket();
   if (!socket) return;
 
