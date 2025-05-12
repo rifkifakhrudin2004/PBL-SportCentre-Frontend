@@ -14,7 +14,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { User, Role } from '@/types';
-import { useAuth } from '@/context/auth.context';
+import { useAuth } from '@/context/auth/auth.context';
 
 // Interface untuk respons API
 interface UsersResponse {

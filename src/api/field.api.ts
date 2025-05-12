@@ -1,5 +1,6 @@
 import axiosInstance from '../config/axios.config';
-import { Field, FieldReview, FieldType } from '../types';
+import { Field, FieldReview, FieldType, Booking } from '../types';
+import { bookingApi } from './booking.api';
 
 // Interface untuk format respons dengan data dan meta
 interface FieldResponseWithMeta {
@@ -216,7 +217,7 @@ class FieldApi {
    */
   async checkFieldAvailability(fieldId: number, date: string): Promise<{ slots: { time: string, available: boolean }[] }> {
     try {
-      const response = await axiosInstance.get<{ data: { slots: { time: string, available: boolean }[] } } | { slots: { time: string, available: boolean }[] }>(`/fields/${fieldId}/availability?date=${date}`);
+      const response = await axiosInstance.get<{ data: { slots: { time: string, available: boolean }[] } } | { slots: { time: string, available: boolean }[] }>(`/fields/${fieldId}/availability?date=${date}&noCache=true`);
       
       // Format 1: { data: { slots: [...] } }
       if ('data' in response.data && response.data.data.slots) {
@@ -231,6 +232,160 @@ class FieldApi {
     } catch (error) {
       console.error(`Error checking field availability for field ID ${fieldId}:`, error);
       return { slots: [] };
+    }
+  }
+
+  /**
+   * Mendapatkan data slot waktu yang terpesan untuk lapangan berdasarkan cabang, tanggal dan waktu
+   * @param selectedBranch - ID cabang
+   * @param selectedDate - Tanggal booking (format: YYYY-MM-DD)
+   * @param fields - Data lapangan
+   * @param times - Array waktu dalam format "HH:MM"
+   * @returns Promise dengan object yang berisi ID lapangan dan array waktu yang terpesan
+   */
+  async fetchBookedTimeSlots(
+    selectedBranch: number,
+    selectedDate: string,
+    fields: Field[],
+    times: string[]
+  ): Promise<{[key: number]: string[]}> {
+    try {
+      // Force refresh data - hapus cache dari tanggal yang dipilih
+      const cacheKey = `${selectedBranch}_${selectedDate}`;
+      sessionStorage.removeItem(cacheKey);
+      
+      console.log('Fetching availability for date:', selectedDate);
+      const booked: {[key: number]: string[]} = {};
+      
+      // Gunakan endpoint untuk mendapatkan ketersediaan semua lapangan sekaligus
+      try {
+        const response = await axiosInstance.get(`/fields/availability`, {
+          params: { 
+            date: selectedDate,
+            branchId: selectedBranch > 0 ? selectedBranch : undefined,
+            noCache: true
+          }
+        });
+        
+        // Proses respons API
+        const responseData = response.data as any;
+        
+        if (responseData && responseData.success && Array.isArray(responseData.data)) {
+          console.log('Successfully fetched availability data:', responseData.data.length, 'fields');
+          
+          // Iterasi setiap lapangan dalam respons
+          responseData.data.forEach((fieldAvailability: any) => {
+            const fieldId = fieldAvailability.fieldId;
+            const availableTimeSlots = fieldAvailability.availableTimeSlots || [];
+            
+            // Konversi slot waktu tersedia menjadi rentang jam yang tersedia
+            // Kita akan membuat set dari semua jam yang tersedia
+            const availableHoursSet = new Set<string>();
+            
+            // Iterasi setiap slot waktu tersedia
+            // PENTING: Backend menyimpan waktu dalam UTC, kita perlu mengkonversinya ke lokal
+            availableTimeSlots.forEach((slot: any) => {
+              // Parse ISO string ke objek Date (tetap dalam UTC)
+              const startTime = new Date(slot.start);
+              const endTime = new Date(slot.end);
+              
+              // Log untuk debugging
+              console.log(`Slot original UTC - start: ${startTime.toISOString()}, end: ${endTime.toISOString()}`);
+              
+              // Gunakan timezone lokal untuk mendapatkan jam yang sesuai
+              const localStartHour = startTime.getHours();
+              const localEndHour = endTime.getHours();
+              
+              console.log(`Slot hours - start: ${localStartHour}:00, end: ${localEndHour}:00`);
+              
+              // Penanganan khusus: jika slot mencakup 00:00-24:00 (seluruh hari)
+              if (startTime.getHours() === 0 && endTime.getHours() === 0 &&
+                  startTime.getDate() === endTime.getDate() - 1) {
+                // Seluruh hari tersedia, tambahkan semua jam
+                times.forEach(time => availableHoursSet.add(time));
+              } else {
+                // Dapatkan semua jam di antara waktu mulai dan selesai (end time exclusive)
+                // PENTING: endTime bersifat exclusive sehingga booking 8:00-10:00 berarti 
+                // hanya jam 8:00 dan 9:00 yang terpesan, sementara jam 10:00 masih tersedia
+                for (let hour = localStartHour; hour < localEndHour; hour++) {
+                  availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+                }
+
+                // Kasus khusus: jika endTime adalah 00:00 (tengah malam), tambahkan 23:00
+                if (localEndHour === 0 && endTime.getMinutes() === 0) {
+                  availableHoursSet.add("23:00");
+                }
+              }
+            });
+            
+            // Semua jam yang tidak ada dalam availableHoursSet dianggap terpesan
+            const bookedHours = times.filter(time => !Array.from(availableHoursSet).includes(time));
+            
+            // Debug output
+            console.log(`Field #${fieldId}: Available hours:`, Array.from(availableHoursSet));
+            console.log(`Field #${fieldId}: Booked hours:`, bookedHours);
+            
+            // Simpan jam yang terpesan untuk lapangan ini
+            booked[fieldId] = bookedHours;
+          });
+        } else {
+          console.error('Invalid response format:', responseData);
+        }
+      } catch (error) {
+        console.error("Error fetching field availability:", error);
+        
+        // Fallback ke metode alternatif jika endpoint utama gagal
+        try {
+          console.log('Using fallback method for availability');
+          const filteredFields = fields.filter(field => field.branchId === selectedBranch);
+          
+          // Inisialisasi booked entries untuk semua lapangan (penting untuk reset)
+          filteredFields.forEach(field => {
+            booked[field.id] = [];
+          });
+          
+          // Dapatkan semua booking
+          const bookings = await bookingApi.getUserBookings();
+          const allBookings = Array.isArray(bookings) ? bookings : [];
+          
+          // Filter booking berdasarkan tanggal yang dipilih
+          const relevantBookings = allBookings.filter((booking: Booking) => {
+            const bookingDate = new Date(booking.bookingDate).toISOString().split('T')[0];
+            return bookingDate === selectedDate;
+          });
+          
+          console.log('Relevant bookings found:', relevantBookings.length);
+          
+          // Kelompokkan booking berdasarkan lapangan
+          relevantBookings.forEach((booking: Booking) => {
+            const fieldId = booking.fieldId;
+            
+            if (!booked[fieldId]) {
+              booked[fieldId] = [];
+            }
+            
+            const startTime = new Date(booking.startTime);
+            const endTime = new Date(booking.endTime);
+            
+            // Tandai semua jam dalam rentang sebagai terpesan (inclusive startTime, exclusive endTime)
+            // Contoh: Booking 21:00-23:00 akan menandai jam 21:00 dan 22:00 sebagai terpesan
+            for (let hour = startTime.getHours(); hour < endTime.getHours(); hour++) {
+              const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+              if (!booked[fieldId].includes(timeSlot)) {
+                booked[fieldId].push(timeSlot);
+              }
+            }
+          });
+        } catch (fallbackError) {
+          console.error("Fallback availability fetch failed:", fallbackError);
+        }
+      }
+      
+      console.log('Final booked slots:', booked);
+      return booked;
+    } catch (error) {
+      console.error("Error fetching booked time slots:", error);
+      return {};
     }
   }
 }

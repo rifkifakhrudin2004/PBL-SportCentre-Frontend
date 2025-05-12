@@ -14,7 +14,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { User, Role } from '@/types';
-import { useAuth } from '@/context/auth.context';
+import { useAuth } from '@/context/auth/auth.context';
 import { branchApi } from '@/api/branch.api';
 
 // Interface untuk data admin cabang

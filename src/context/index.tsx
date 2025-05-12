@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { AuthProvider } from './auth.context';
+import { PropsWithChildren } from "react";
 
-interface AppProvidersProps {
-  children: ReactNode;
-}
+import { AuthProvider } from "@/context/auth/auth.context";
+import { BookingProvider } from "@/context/booking/booking.context";
 
-export const AppProviders = ({ children }: AppProvidersProps) => {
+export const Providers = ({ children }: PropsWithChildren) => {
   return (
     <AuthProvider>
-      {children}
+      <BookingProvider>
+        {children}
+      </BookingProvider>
     </AuthProvider>
   );
 }; 

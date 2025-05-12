@@ -1,6 +1,6 @@
 import axiosInstance from '../config/axios.config';
 import { LoginRequest, RegisterRequest, UserWithToken, User } from '../types';
-import { hasAuthCookie } from '@/utils/cookie';
+import { hasAuthCookie } from '@/utils/cookie.utils';
 
 class AuthApi {
   /**

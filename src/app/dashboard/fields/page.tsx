@@ -14,7 +14,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Field, Role } from '@/types';
-import { useAuth } from '@/context/auth.context';
+import { useAuth } from '@/context/auth/auth.context';
 import { fieldApi } from '@/api/field.api';
 
 export default function FieldsPage() {

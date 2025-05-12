@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AppProviders } from "@/context";
+import { Providers } from "@/context";
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
@@ -16,10 +16,10 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body>
-        <AppProviders>
+        <Providers>
         {children}
           <Toaster />
-        </AppProviders>
+        </Providers>
       </body>
     </html>
   );

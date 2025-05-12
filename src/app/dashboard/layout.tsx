@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useAuth } from '@/context/auth.context';
+import { useAuth } from '@/context/auth/auth.context';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { redirect } from 'next/navigation';
 

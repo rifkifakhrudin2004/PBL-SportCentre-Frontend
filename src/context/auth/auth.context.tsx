@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '@/types';
 import { authApi } from '@/api/auth.api';
-import { hasAuthCookie } from '@/utils/cookie';
+import { hasAuthCookie } from '@/utils/cookie.utils';
 
 // Interface untuk error Axios
 interface AxiosErrorResponse {

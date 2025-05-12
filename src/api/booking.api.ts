@@ -1,5 +1,6 @@
 import axiosInstance from '../config/axios.config';
 import { Booking, BookingRequest, Payment, PaymentMethod } from '../types';
+import { combineDateAndTime, localToUTC } from '@/utils/date.utils';
 
 // Interface untuk format respons dengan data dan meta
 interface BookingResponseWithMeta {
@@ -21,7 +22,25 @@ class BookingApi {
    */
   async getUserBookings(): Promise<Booking[]> {
     try {
-      const response = await axiosInstance.get<BookingResponseWithMeta | { bookings: Booking[] } | Booking[]>('/user/bookings');
+      // Mendapatkan ID user dari localStorage
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        console.error('User tidak ditemukan di localStorage');
+        return [];
+      }
+      
+      const user = JSON.parse(userStr);
+      const userId = user?.id;
+      
+      if (!userId) {
+        console.error('User ID tidak ditemukan');
+        return [];
+      }
+      
+      // Gunakan endpoint yang benar sesuai dengan backend
+      const response = await axiosInstance.get<BookingResponseWithMeta | { bookings: Booking[] } | Booking[]>(
+        `/users/${userId}/bookings`
+      );
       
       // Handle format respons yang berbeda-beda
       if (response.data && typeof response.data === 'object') {
@@ -74,17 +93,38 @@ class BookingApi {
   }
 
   /**
-   * Buat booking baru
+   * Membuat booking baru
    * @param data - Data booking baru
    * @returns Promise dengan data booking yang berhasil dibuat
    */
   async createBooking(data: BookingRequest): Promise<Booking> {
     try {
-      const response = await axiosInstance.post<
-        { data: Booking } | 
-        { booking: Booking }
-      >('/bookings', data);
+      console.log('Original booking data:', data);
       
+      // Konversi waktu lokal ke UTC untuk dikirim ke server
+      const bookingDate = new Date(data.bookingDate);
+      
+      // Gabungkan tanggal dan waktu, lalu konversi ke UTC
+      const startDateTime = combineDateAndTime(data.bookingDate, data.startTime);
+      const endDateTime = combineDateAndTime(data.bookingDate, data.endTime);
+      
+      console.log('Local date/time - Start:', startDateTime.toString());
+      console.log('Local date/time - End:', endDateTime.toString());
+      
+      // Data yang akan dikirim ke server (format tetap sama, tapi nilai waktu dalam UTC)
+      const requestData = {
+        ...data,
+        // Format tanggal tetap YYYY-MM-DD
+        bookingDate: data.bookingDate
+      };
+      
+      console.log('Sending booking data to server:', requestData);
+      
+      const response = await axiosInstance.post<
+        { data: Booking } |
+        { booking: Booking }
+      >('/bookings', requestData);
+
       // Format 1: { data: {...} }
       if ('data' in response.data) {
         return response.data.data;
@@ -93,7 +133,7 @@ class BookingApi {
       else if ('booking' in response.data) {
         return response.data.booking;
       }
-      
+
       throw new Error('Unexpected response format');
     } catch (error) {
       console.error('Error creating booking:', error);
