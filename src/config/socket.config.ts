@@ -102,10 +102,11 @@ export const disconnectSocket = () => {
   }
 };
 
-export default {
+const socketConfig = {
   initSocket,
   getSocket,
   joinRoom,
   leaveRoom,
   disconnectSocket,
 }; 
+export default socketConfig;

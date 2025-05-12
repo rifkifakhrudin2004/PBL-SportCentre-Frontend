@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, ReactNode, useState, useEffect, useCallback, useMemo } from "react";
 import { Field, Branch } from "@/types";
 import { branchApi, fieldApi, bookingApi } from "@/api";
 import { format } from "date-fns";
@@ -85,10 +85,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const user = useAuth();
   const userId = user?.user?.id || 0;
   
-  const times = [
+  const times = useMemo(() => [
     "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
     "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
-  ];
+  ], []);
   
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),

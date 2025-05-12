@@ -57,8 +57,10 @@ export const joinBookingRoom = (bookingId: number) => {
   console.log('Joined room for booking:', bookingId);
 };
 
-export default {
+const bookingSocket = {
   subscribeToBookingUpdates,
   subscribeToBookingCancellations,
   joinBookingRoom,
-}; 
+};
+
+export default bookingSocket; 
