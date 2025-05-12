@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Field } from "@/types";
 import { useBooking } from "./useBooking.hook";
 
@@ -22,9 +22,6 @@ export const useTimeSlot = () => {
     return fields.filter((field) => field.branchId === selectedBranch);
   }, [fields, selectedBranch]);
 
-  const [consecutiveBooking, setConsecutiveBooking] = useState<{[key: number]: {[key: string]: boolean}}>({});
-
-  // Mendeteksi jika jam sebelumnya tersedia atau tidak untuk setiap lapangan
   useEffect(() => {
     // Fungsi untuk menghitung status konsekutif untuk satu lapangan
     const calculateConsecutiveStatus = (field: Field) => {
@@ -36,7 +33,7 @@ export const useTimeSlot = () => {
       });
       
       // Kemudian kita cek slot yang terpesan
-      times.forEach((time, index) => {
+      times.forEach((time) => {
         // Cek apakah slot ini terpesan
         const isBooked = bookedTimeSlots[field.id]?.includes(time);
         
@@ -49,20 +46,11 @@ export const useTimeSlot = () => {
       return fieldStatus;
     };
     
-    // Buat objek untuk melacak status konsekutif
+    // Objek untuk melacak status konsekutif
     const newConsecutiveStatus: {[key: number]: {[key: string]: boolean}} = {};
     
     filteredFields.forEach(field => {
       newConsecutiveStatus[field.id] = calculateConsecutiveStatus(field);
-    });
-    
-    // Bandingkan dengan state sebelumnya untuk menghindari update yang tidak perlu
-    setConsecutiveBooking(prev => {
-      // Jika secara struktural sama, jangan update state
-      if (JSON.stringify(prev) === JSON.stringify(newConsecutiveStatus)) {
-        return prev;
-      }
-      return newConsecutiveStatus;
     });
   }, [filteredFields, bookedTimeSlots, times]);
 

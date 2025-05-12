@@ -1,10 +1,16 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
-import { BookingWithPayment, Field, Branch } from "@/types";
+import { Field, Branch } from "@/types";
 import { branchApi, fieldApi, bookingApi } from "@/api";
 import { format } from "date-fns";
-import { initSocket, joinFieldAvailabilityRoom, subscribeToFieldAvailability, requestAvailabilityUpdate } from "@/services/socket";
+import { 
+  initSocket, 
+  joinFieldAvailabilityRoom, 
+  subscribeToFieldAvailability, 
+  requestAvailabilityUpdate
+} from "@/services/socket";
+import type { FieldAvailabilityData } from "@/services/socket/field-availability.socket";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,8 +42,8 @@ interface BookingContextType {
   selectedDate: string;
   selectedBranch: number;
   selectedField: number;
-  selectedBranchName: String;
-  selectedFieldName: String;
+  selectedBranchName: string;
+  selectedFieldName: string;
   selectedStartTime: string;
   selectedEndTime: string;
   bookedTimeSlots: {[key: number]: string[]};
@@ -56,6 +62,8 @@ interface BookingContextType {
 
 export const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
+// Struktur tipe data sudah didefinisikan dalam FieldAvailabilityData
+
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [fields, setFields] = useState<Field[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -66,8 +74,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   );
   const [selectedBranch, setSelectedBranch] = useState<number>(0);
   const [selectedField, setSelectedField] = useState<number>(0);
-  const [selectedBranchName, setSelectedBranchName] = useState<String>("Cabang");
-  const [selectedFieldName, setSelectedFieldName] = useState<String>("Lapangan");
+  const [selectedBranchName, setSelectedBranchName] = useState<string>("Cabang");
+  const [selectedFieldName, setSelectedFieldName] = useState<string>("Lapangan");
   const [selectedStartTime, setSelectedStartTime] = useState<string>("-");
   const [selectedEndTime, setSelectedEndTime] = useState<string>("");
   const [bookedTimeSlots, setBookedTimeSlots] = useState<{[key: number]: string[]}>({});
@@ -181,7 +189,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     
     // Inisialisasi socket.io
     try {
-      const socket = initSocket();
+      initSocket();
       console.log('Socket initialized in booking context');
     } catch (error) {
       console.error('Error initializing socket:', error);
@@ -195,44 +203,28 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       joinFieldAvailabilityRoom(selectedBranch, selectedDate);
       
       // Subscribe untuk pembaruan ketersediaan lapangan
-      const unsubscribe = subscribeToFieldAvailability((data) => {
+      const unsubscribe = subscribeToFieldAvailability((data: FieldAvailabilityData) => {
         console.log('Received field availability update from socket.io:', data);
         // Update bookedTimeSlots berdasarkan data dari server
-        if (data && Array.isArray(data)) {
+        if (data && Array.isArray(data.fields)) {
           const newBookedSlots: {[key: number]: string[]} = {};
           
           // Proses data dari socket
-          data.forEach((fieldData: any) => {
-            if (fieldData.fieldId) {
-              const fieldId = fieldData.fieldId;
-              const availableTimeSlots = fieldData.availableTimeSlots || [];
+          data.fields.forEach((fieldData) => {
+            if (fieldData.id) {
+              const fieldId = fieldData.id;
+              const availableHours = fieldData.availableHours || [];
               
               // Konversi slot waktu tersedia menjadi jam
-              const availableHours = new Set<string>();
-              availableTimeSlots.forEach((slot: any) => {
-                const startTime = new Date(slot.start);
-                const endTime = new Date(slot.end);
-                
-                // Penanganan khusus: jika slot mencakup 00:00-24:00 (seluruh hari)
-                if (startTime.getHours() === 0 && endTime.getHours() === 0 && 
-                    startTime.getDate() === endTime.getDate() - 1) {
-                  // Seluruh hari tersedia, tambahkan semua jam
-                  times.forEach(time => availableHours.add(time));
-                } else {
-                  // Proses seperti biasa untuk slot parsial
-                  for (let hour = startTime.getHours(); hour < endTime.getHours(); hour++) {
-                    availableHours.add(`${hour.toString().padStart(2, '0')}:00`);
-                  }
-                  
-                  // Kasus khusus: jika endTime adalah 00:00 (tengah malam), tambahkan 23:00
-                  if (endTime.getHours() === 0 && endTime.getMinutes() === 0) {
-                    availableHours.add("23:00");
-                  }
+              const availableHourSet = new Set<string>();
+              availableHours.forEach((slot) => {
+                if (slot.isAvailable) {
+                  availableHourSet.add(`${slot.hour.toString().padStart(2, '0')}:00`);
                 }
               });
               
               // Cari jam yang tidak tersedia (terpesan)
-              const bookedHours = times.filter(time => !Array.from(availableHours).includes(time));
+              const bookedHours = times.filter(time => !Array.from(availableHourSet).includes(time));
               newBookedSlots[fieldId] = bookedHours;
             }
           });
@@ -259,8 +251,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     fetchInitialAvailability();
   }, [fetchInitialAvailability]);
 
-  // Handler untuk form submission
-  const onSubmit = async (formData: BookingFormValues) => {
+  const onSubmit = async () => {
     setLoading(true);
     setError(null);
 
