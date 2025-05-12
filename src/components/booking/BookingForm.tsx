@@ -1,92 +1,95 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { useBooking } from "@/hooks/useBooking.hook";
+import { useDurationCalculator } from "@/hooks/useDurationCalculator.hook";
 
-type BookingFormProps = {
-  selectedFieldName: String;
-  selectedBranchName: String;
-  selectedStartTime: string;
-  times: string[];
-  form: UseFormReturn<any>;
-  onSubmit: (formData: any) => Promise<void>;
-};
+export default function BookingForm() {
+  // Menggunakan hook context
+  const {
+    selectedFieldName,
+    selectedBranchName,
+    selectedStartTime,
+    selectedEndTime,
+    times,
+    form,
+    onSubmit
+  } = useBooking();
 
-export default function BookingForm({
-  selectedFieldName,
-  selectedBranchName,
-  selectedStartTime,
-  times,
-  form,
-  onSubmit,
-}: BookingFormProps) {
-  // Filter waktu selesai yang valid (harus lebih besar dari waktu mulai)
-  const getValidEndTimes = () => {
-    if (selectedStartTime === "-") return [];
-    
-    const startHour = parseInt(selectedStartTime.split(":")[0], 10);
-    return times.filter(time => {
-      const hour = parseInt(time.split(":")[0], 10);
-      return hour > startHour;
-    });
-  };
-  
-  const validEndTimes = getValidEndTimes();
+  // Menggunakan custom hook untuk menghitung durasi
+  const { durationInHours } = useDurationCalculator();
+
+  // Pastikan format waktu yang ditampilkan sesuai dengan timezone lokal
+  const formattedStartTime = selectedStartTime === "-" ? "" : selectedStartTime;
+  const formattedEndTime = selectedEndTime || "";
 
   return (
-    <div className="max-w-xl mx-auto bg-white shadow-lg rounded-xl p-6 border border-gray-200">
-      <h2 className="text-xl font-semibold text-center mb-2">Pesanan Anda</h2>
-      <div className="mb-6 text-center">
-        <h4 className="text-lg font-medium text-black">
-          Lapangan {selectedFieldName === "Lapangan" ? "Belum Dipilih" : selectedFieldName}
-        </h4>
-        <p className="text-black">
-          Cabang {selectedBranchName === "Cabang" ? "Pilih Cabang" : selectedBranchName}
-        </p>
-      </div>
-
+    <div className="max-w-xl mx-auto bg-white shadow rounded-lg p-6 border border-gray-200">
+      <h2 className="text-xl font-bold text-center mb-6">Pesanan Anda</h2>
+      
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-1">
-              Jam Mulai:
-            </label>
-            <input
-              type="text"
-              name="startTime"
-              value={selectedStartTime}
-              disabled
-              className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700"
-            />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Lapangan:</span>
+            <span className="font-medium">{selectedFieldName === "Lapangan" ? "-" : selectedFieldName}</span>
           </div>
-          <div>
-            <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-1">
-              Jam Selesai:
-            </label>
-            <select
-              id="endTime"
-              {...form.register("endTime")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
-              disabled={selectedStartTime === "-" || validEndTimes.length === 0}
-            >
-              <option value="">Pilih Jam Selesai</option>
-              {validEndTimes.map((time, index) => (
-                <option key={index} value={time}>{time}</option>
-              ))}
-            </select>
-            {selectedStartTime !== "-" && validEndTimes.length === 0 && (
-              <p className="text-red-500 text-sm mt-1">Tidak ada jam tersedia setelah {selectedStartTime}</p>
-            )}
+          
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Cabang:</span>
+            <span className="font-medium">{selectedBranchName === "Cabang" ? "-" : selectedBranchName}</span>
+          </div>
+          
+          <hr className="my-2" />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label htmlFor="startTime" className="block text-sm text-gray-600">
+                Jam Mulai:
+              </label>
+              <input
+                type="text"
+                name="startTime"
+                value={formattedStartTime}
+                readOnly
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded text-gray-700"
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <label htmlFor="endTime" className="block text-sm text-gray-600">
+                Jam Selesai:
+              </label>
+              <input
+                type="text"
+                name="endTime"
+                value={formattedEndTime}
+                readOnly
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded text-gray-700"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="text-center">
-          <button
+        {selectedStartTime !== "-" && selectedEndTime && (
+          <div className="border border-gray-200 rounded p-3 bg-gray-50 text-center">
+            <p className="text-sm text-gray-600 mb-1">Durasi Booking:</p>
+            <p className="font-medium">
+              {formattedStartTime} - {formattedEndTime}
+              <span className="ml-2 bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
+                {durationInHours} jam
+              </span>
+            </p>
+          </div>
+        )}
+
+        <div className="pt-2">
+          <Button
             type="submit"
-            className="bg-primary hover:bg-primary/80 text-white font-semibold py-2 px-6 rounded-lg transition duration-200"
-            disabled={selectedStartTime === "-" || validEndTimes.length === 0}
+            className="w-full py-3 bg-black hover:bg-black/90 text-white font-medium rounded transition-all"
+            disabled={selectedStartTime === "-" || !selectedEndTime}
           >
-            Booking
-          </button>
+            Booking Sekarang
+          </Button>
         </div>
       </form>
     </div>

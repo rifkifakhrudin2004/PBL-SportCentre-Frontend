@@ -2,7 +2,7 @@
 
 import { ReactNode, useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
-import { useAuth } from '@/context/auth.context';
+import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
 
 interface DashboardLayoutProps {

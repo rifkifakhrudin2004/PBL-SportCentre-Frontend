@@ -2,37 +2,35 @@
 
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Branch } from "@/types";
+import { useBooking } from "@/hooks/useBooking.hook";
 
-type BookingHeaderProps = {
-  selectedDate: string;
-  selectedBranch: number;
-  branches: Branch[];
-  dateValueHandler: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  branchChanged: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  showPicker: () => void;
-};
+export default function BookingHeader() {
+  const {
+    selectedDate,
+    selectedBranch,
+    branches,
+    dateValueHandler,
+    branchChanged,
+    showPicker,
+  } = useBooking();
 
-export default function BookingHeader({
-  selectedDate,
-  selectedBranch,
-  branches,
-  dateValueHandler,
-  branchChanged,
-  showPicker,
-}: BookingHeaderProps) {
   return (
-    <div className="flex justify-between items-center mb-0 bg-black text-white py-2.5 px-8">
-      <button className="flex items-center" onClick={showPicker}>
-        {selectedDate
-          ? format(new Date(selectedDate), "dd MMMM yyyy", { locale: id })
-          : "Pilih Tanggal"}
+    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white py-4 px-6 rounded-t-xl shadow-md">
+      <button 
+        className="flex items-center justify-center space-x-2 mb-3 sm:mb-0 px-4 py-2 hover:bg-black/20 rounded-lg transition-colors"
+        onClick={showPicker}
+      >
+        <span className="text-sm sm:text-base font-medium">
+          {selectedDate
+            ? format(new Date(selectedDate), "EEEE, dd MMMM yyyy", { locale: id })
+            : "Pilih Tanggal"}
+        </span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
-          className="ml-1"
+          className="text-gray-300"
         >
           <path
             fill="currentColor"
@@ -48,19 +46,26 @@ export default function BookingHeader({
         onKeyDown={(e) => e.preventDefault()}
         className="absolute opacity-0 w-0 h-0"
       />
-      <select
-        name="branch"
-        id="branch"
-        onChange={branchChanged}
-        value={selectedBranch}
-        className="bg-black border border-white rounded px-3 py-1"
-      >
-        {branches.map((branch) => (
-          <option key={branch.id} value={branch.id} className="text-black">
-            {branch.name}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          name="branch"
+          id="branch"
+          onChange={branchChanged}
+          value={selectedBranch}
+          className="appearance-none bg-white/10 hover:bg-white/20 text-white border border-gray-600 rounded-lg pl-4 pr-10 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-white/30 transition-colors text-sm sm:text-base"
+        >
+          {branches.map((branch) => (
+            <option key={branch.id} value={branch.id} className="bg-gray-800 text-white">
+              {branch.name}
+            </option>
+          ))}
+        </select>
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+          </svg>
+        </div>
+      </div>
     </div>
   );
 } 

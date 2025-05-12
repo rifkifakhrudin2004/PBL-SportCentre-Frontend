@@ -217,7 +217,7 @@ class FieldApi {
    */
   async checkFieldAvailability(fieldId: number, date: string): Promise<{ slots: { time: string, available: boolean }[] }> {
     try {
-      const response = await axiosInstance.get<{ data: { slots: { time: string, available: boolean }[] } } | { slots: { time: string, available: boolean }[] }>(`/fields/${fieldId}/availability?date=${date}`);
+      const response = await axiosInstance.get<{ data: { slots: { time: string, available: boolean }[] } } | { slots: { time: string, available: boolean }[] }>(`/fields/${fieldId}/availability?date=${date}&noCache=true`);
       
       // Format 1: { data: { slots: [...] } }
       if ('data' in response.data && response.data.data.slots) {
@@ -262,7 +262,8 @@ class FieldApi {
         const response = await axiosInstance.get(`/fields/availability`, {
           params: { 
             date: selectedDate,
-            branchId: selectedBranch > 0 ? selectedBranch : undefined
+            branchId: selectedBranch > 0 ? selectedBranch : undefined,
+            noCache: true
           }
         });
         
@@ -282,32 +283,50 @@ class FieldApi {
             const availableHoursSet = new Set<string>();
             
             // Iterasi setiap slot waktu tersedia
+            // PENTING: Backend menyimpan waktu dalam UTC, kita perlu mengkonversinya ke lokal
             availableTimeSlots.forEach((slot: any) => {
+              // Parse ISO string ke objek Date (tetap dalam UTC)
               const startTime = new Date(slot.start);
               const endTime = new Date(slot.end);
               
-              // Dapatkan semua jam di antara waktu mulai dan selesai
-              for (let hour = startTime.getHours(); hour < endTime.getHours(); hour++) {
-                availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+              // Log untuk debugging
+              console.log(`Slot original UTC - start: ${startTime.toISOString()}, end: ${endTime.toISOString()}`);
+              
+              // Gunakan timezone lokal untuk mendapatkan jam yang sesuai
+              const localStartHour = startTime.getHours();
+              const localEndHour = endTime.getHours();
+              
+              console.log(`Slot hours - start: ${localStartHour}:00, end: ${localEndHour}:00`);
+              
+              // Penanganan khusus: jika slot mencakup 00:00-24:00 (seluruh hari)
+              if (startTime.getHours() === 0 && endTime.getHours() === 0 &&
+                  startTime.getDate() === endTime.getDate() - 1) {
+                // Seluruh hari tersedia, tambahkan semua jam
+                times.forEach(time => availableHoursSet.add(time));
+              } else {
+                // Dapatkan semua jam di antara waktu mulai dan selesai (end time exclusive)
+                // PENTING: endTime bersifat exclusive sehingga booking 8:00-10:00 berarti 
+                // hanya jam 8:00 dan 9:00 yang terpesan, sementara jam 10:00 masih tersedia
+                for (let hour = localStartHour; hour < localEndHour; hour++) {
+                  availableHoursSet.add(`${hour.toString().padStart(2, '0')}:00`);
+                }
+
+                // Kasus khusus: jika endTime adalah 00:00 (tengah malam), tambahkan 23:00
+                if (localEndHour === 0 && endTime.getMinutes() === 0) {
+                  availableHoursSet.add("23:00");
+                }
               }
             });
             
-            // Konversi set menjadi array
-            const availableHours = Array.from(availableHoursSet);
+            // Semua jam yang tidak ada dalam availableHoursSet dianggap terpesan
+            const bookedHours = times.filter(time => !Array.from(availableHoursSet).includes(time));
             
-            // Buat array semua jam yang diharapkan (dari parameter times)
-            // Pastikan menggunakan salinan untuk menghindari mutasi
-            const allHours = [...times];
+            // Debug output
+            console.log(`Field #${fieldId}: Available hours:`, Array.from(availableHoursSet));
+            console.log(`Field #${fieldId}: Booked hours:`, bookedHours);
             
-            // Filter jam yang sudah terpesan (tidak tersedia)
-            const bookedHours = allHours.filter(hour => !availableHours.includes(hour));
-            
-            if (bookedHours.length > 0) {
-              booked[fieldId] = bookedHours;
-            } else {
-              // Pastikan lapangan tanpa jam yang terpesan juga diatur (penting untuk reset)
-              booked[fieldId] = [];
-            }
+            // Simpan jam yang terpesan untuk lapangan ini
+            booked[fieldId] = bookedHours;
           });
         } else {
           console.error('Invalid response format:', responseData);

@@ -6,7 +6,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 // Socket.io singleton instance
 let socket: Socket | null = null;
 
-// Inisialisasi socket connection
+/**
+ * Inisialisasi socket connection
+ * @returns Instance Socket.IO
+ */
 export const initSocket = (): Socket => {
   if (!socket) {
     console.log('Initializing socket connection to:', API_URL);
@@ -18,7 +21,7 @@ export const initSocket = (): Socket => {
       reconnectionDelay: 1000,
     });
 
-    // Event listeners
+    // Event listeners for connection status
     socket.on('connect', () => {
       console.log('Socket connected with ID:', socket?.id);
     });
@@ -51,7 +54,10 @@ export const initSocket = (): Socket => {
   return socket;
 };
 
-// Dapatkan instance socket
+/**
+ * Dapatkan instance socket yang sudah diinisialisasi
+ * @returns Socket instance atau null jika belum diinisialisasi
+ */
 export const getSocket = (): Socket | null => {
   if (!socket) {
     console.warn('Socket not initialized yet');
@@ -60,47 +66,34 @@ export const getSocket = (): Socket | null => {
   return socket;
 };
 
-// Gabung ke room untuk pembaruan ketersediaan lapangan
-export const joinFieldAvailabilityRoom = (branchId?: number, date?: string) => {
+/**
+ * Fungsi umum untuk bergabung ke room socket
+ * @param roomId - ID room yang akan dimasuki
+ * @param data - Data tambahan yang dikirim saat join room
+ */
+export const joinRoom = (roomId: string, data?: any) => {
   const socket = getSocket();
   if (!socket) return;
 
-  const roomId = date ? `field_availability_${date}` : 'field_availability';
-  socket.emit('join_room', { room: roomId, branchId });
+  socket.emit('join_room', { room: roomId, ...data });
   console.log('Joined room:', roomId);
-  
-  // Minta update ketersediaan lapangan terbaru segera setelah join room
-  requestAvailabilityUpdate(date, branchId);
 };
 
-// Minta update ketersediaan lapangan terbaru
-export const requestAvailabilityUpdate = (date?: string, branchId?: number) => {
+/**
+ * Fungsi umum untuk meninggalkan room socket
+ * @param roomId - ID room yang akan ditinggalkan
+ */
+export const leaveRoom = (roomId: string) => {
   const socket = getSocket();
   if (!socket) return;
-  
-  socket.emit('request_availability_update', { date, branchId });
-  console.log('Requested availability update for date:', date || 'all dates');
+
+  socket.emit('leave_room', { room: roomId });
+  console.log('Left room:', roomId);
 };
 
-// Dapatkan pembaruan ketersediaan lapangan
-export const subscribeToFieldAvailability = (callback: (data: any) => void) => {
-  const socket = getSocket();
-  if (!socket) return () => {};
-
-  const handleUpdate = (data: any) => {
-    console.log('Received field availability update:', data);
-    callback(data);
-  };
-
-  socket.on('fieldsAvailabilityUpdate', handleUpdate);
-
-  // Return unsubscribe function
-  return () => {
-    socket.off('fieldsAvailabilityUpdate', handleUpdate);
-  };
-};
-
-// Tutup koneksi socket
+/**
+ * Tutup koneksi socket
+ */
 export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();
@@ -112,8 +105,7 @@ export const disconnectSocket = () => {
 export default {
   initSocket,
   getSocket,
-  joinFieldAvailabilityRoom,
-  requestAvailabilityUpdate,
-  subscribeToFieldAvailability,
+  joinRoom,
+  leaveRoom,
   disconnectSocket,
 }; 

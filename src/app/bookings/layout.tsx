@@ -2,7 +2,7 @@
 
 import { MainLayout } from '@/components/layout/MainLayout';
 
-export default function BookingsLayout({
+export default function BranchesLayout({
   children,
 }: {
   children: React.ReactNode;

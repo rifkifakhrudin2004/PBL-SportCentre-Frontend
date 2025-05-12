@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Branch } from '@/types';
 import { branchApi } from '@/api/branch.api';
-import { useAuth } from '@/context/auth.context';
+import { useAuth } from '@/context/auth/auth.context';
 import { Role } from '@/types';
 
 export default function BranchesPage() {
