@@ -66,8 +66,10 @@ export const subscribeToFieldAvailability = (callback: (data: FieldAvailabilityD
   };
 };
 
-export default {
+const fieldAvailabilitySocket = {
   joinFieldAvailabilityRoom,
   requestAvailabilityUpdate,
   subscribeToFieldAvailability,
-}; 
+};
+
+export default fieldAvailabilitySocket; 
