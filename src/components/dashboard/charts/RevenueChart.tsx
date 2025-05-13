@@ -25,11 +25,29 @@ export const RevenueChart = ({
   isLoading = false,
   percentIncrease = 12.5
 }: RevenueChartProps) => {
+  // Pastikan data tidak undefined dan series tidak berisi nilai NaN
+  const validData = {
+    categories: data?.categories || [],
+    series: (data?.series || []).map(val => (isNaN(val) ? 0 : val))
+  };
+
+  // Cek apakah semua data adalah 0 untuk menampilkan pesan
+  const hasValidData = validData.series.some(val => val > 0);
+
   const options: ApexOptions = {
     chart: {
       id: 'revenue-chart',
       toolbar: {
-        show: false,
+        show: true,
+        tools: {
+          download: true,
+          selection: false,
+          zoom: false,
+          zoomin: false,
+          zoomout: false,
+          pan: false,
+          reset: false
+        }
       },
       zoom: {
         enabled: false,
@@ -52,11 +70,27 @@ export const RevenueChart = ({
       }
     },
     xaxis: {
-      categories: data.categories,
+      categories: validData.categories,
       labels: {
         style: {
-          colors: Array(data.categories.length).fill('#94a3b8'),
+          colors: Array(validData.categories.length).fill('#94a3b8'),
           fontSize: '12px'
+        },
+        rotate: 0
+      },
+      axisBorder: {
+        show: true,
+        color: '#f1f5f9'
+      },
+      axisTicks: {
+        show: true,
+        color: '#f1f5f9'
+      }
+    },
+    yaxis: {
+      labels: {
+        formatter: (value) => {
+          return `Rp ${value.toLocaleString('id-ID')}`;
         }
       }
     },
@@ -82,7 +116,7 @@ export const RevenueChart = ({
     },
     tooltip: {
       y: {
-        formatter: (value: number) => `Rp ${value.toLocaleString()}`,
+        formatter: (value: number) => `Rp ${value.toLocaleString('id-ID')}`,
       },
       theme: 'dark',
       style: {
@@ -112,7 +146,7 @@ export const RevenueChart = ({
   const series = [
     {
       name: 'Pendapatan',
-      data: data.series,
+      data: validData.series,
     },
   ];
 
@@ -145,7 +179,7 @@ export const RevenueChart = ({
               <div className="h-40 bg-slate-100 rounded-lg animate-pulse w-full"></div>
             </div>
           </div>
-        ) : data.categories.length > 0 && data.series.length > 0 ? (
+        ) : validData.categories.length > 0 && hasValidData ? (
           <div className="h-80 w-full">
             {typeof window !== 'undefined' && (
               <Chart
@@ -159,7 +193,7 @@ export const RevenueChart = ({
           </div>
         ) : (
           <div className="h-80 w-full flex items-center justify-center">
-            <p className="text-muted-foreground">Tidak ada data pendapatan</p>
+            <p className="text-muted-foreground">Tidak ada data pendapatan untuk ditampilkan</p>
           </div>
         )}
       </CardContent>
