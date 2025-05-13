@@ -29,22 +29,11 @@ export default function MyBranchesPage() {
     const fetchBranches = async () => {
       try {
         setIsLoading(true);
-        // Dalam implementasi sebenarnya, kita perlu mendapatkan cabang berdasarkan owner ID
-        // Untuk sementara kita gunakan getBranches dengan filter
-        const response = await branchApi.getBranches();
-        
-        // Filter cabang berdasarkan ownerId dan pencarian jika ada
-        const filteredBranches = response.data.filter(branch => {
-          const matchesSearch = !searchQuery || 
-            branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            branch.location.toLowerCase().includes(searchQuery.toLowerCase());
-          
-          // Dalam implementasi sebenarnya, kita akan membandingkan dengan user.id
-          // Untuk sementara kita tampilkan semua cabang
-          return matchesSearch;
+        // Menggunakan metode getUserBranches untuk mendapatkan cabang yang dimiliki/dikelola
+        const response = await branchApi.getUserBranches({ 
+          q: searchQuery || undefined 
         });
-        
-        setBranches(filteredBranches);
+        setBranches(response.data);
       } catch (error) {
         console.error('Error fetching branches:', error);
       } finally {
@@ -60,15 +49,15 @@ export default function MyBranchesPage() {
   };
 
   const handleAddBranch = () => {
-    router.push('/dashboard/my-branches/create');
+    router.push('/dashboard/branches/create');
   };
 
   const handleViewBranch = (id: number) => {
-    router.push(`/dashboard/my-branches/${id}`);
+    router.push(`/dashboard/branches/${id}`);
   };
 
-  // Redirect jika bukan owner cabang
-  if (user && user.role !== Role.OWNER_CABANG) {
+  // Redirect jika bukan owner cabang atau admin cabang
+  if (user && user.role !== Role.OWNER_CABANG && user.role !== Role.ADMIN_CABANG) {
     router.push('/dashboard');
     return null;
   }
@@ -77,7 +66,9 @@ export default function MyBranchesPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Cabang Saya</h1>
-        <Button onClick={handleAddBranch}>Tambah Cabang</Button>
+        {user?.role === Role.OWNER_CABANG && (
+          <Button onClick={handleAddBranch}>Tambah Cabang</Button>
+        )}
       </div>
 
       <Card className="mb-6">
@@ -144,13 +135,15 @@ export default function MyBranchesPage() {
                         >
                           Detail
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/dashboard/my-branches/${branch.id}/admins`)}
-                        >
-                          Admin
-                        </Button>
+                        {user?.role === Role.OWNER_CABANG && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/dashboard/branches/${branch.id}/admins`)}
+                          >
+                            Admin
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

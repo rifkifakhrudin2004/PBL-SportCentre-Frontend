@@ -13,16 +13,10 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { User, Role } from '@/types';
+import { Role, BranchAdmin } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
+import { userApi } from '@/api/user.api';
 import { branchApi } from '@/api/branch.api';
-
-// Interface untuk data admin cabang
-interface BranchAdmin {
-  userId: number;
-  branchId: number;
-  user: User;
-}
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
@@ -35,21 +29,9 @@ export default function AdminsPage() {
     const fetchAdmins = async () => {
       try {
         setIsLoading(true);
-        // Dalam implementasi sebenarnya, kita akan mendapatkan daftar cabang milik owner
-        // Kemudian mengambil admin dari setiap cabang
-        // Untuk contoh, kita gunakan cabang dengan ID 1
-        const branchId = 1;
-        const adminList = await branchApi.getBranchAdmins(branchId);
-        
-        // Filter berdasarkan pencarian jika ada
-        const filteredAdmins = searchQuery 
-          ? adminList.filter(admin => 
-              admin.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              admin.user.email.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-          : adminList;
-          
-        setAdmins(filteredAdmins);
+        // Menggunakan endpoint baru untuk mendapatkan admin dari cabang yang dimiliki/dikelola
+        const adminList = await userApi.getUserBranchAdmins(searchQuery || undefined);
+        setAdmins(adminList);
       } catch (error) {
         console.error('Error fetching admins:', error);
         setAdmins([]);
@@ -80,8 +62,8 @@ export default function AdminsPage() {
     }
   };
 
-  // Redirect jika bukan owner cabang
-  if (user && user.role !== Role.OWNER_CABANG) {
+  // Redirect jika bukan owner cabang atau admin cabang
+  if (user && user.role !== Role.OWNER_CABANG && user.role !== Role.ADMIN_CABANG && user.role !== Role.SUPER_ADMIN) {
     router.push('/dashboard');
     return null;
   }
@@ -90,7 +72,9 @@ export default function AdminsPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manajemen Admin Cabang</h1>
-        <Button onClick={handleAddAdmin}>Tambah Admin</Button>
+        {user?.role === Role.OWNER_CABANG && (
+          <Button onClick={handleAddAdmin}>Tambah Admin</Button>
+        )}
       </div>
 
       <Card className="mb-6">
@@ -135,17 +119,19 @@ export default function AdminsPage() {
                 {admins.map((admin) => (
                   <TableRow key={`${admin.branchId}-${admin.userId}`}>
                     <TableCell>{admin.userId}</TableCell>
-                    <TableCell>{admin.user.name}</TableCell>
-                    <TableCell>{admin.user.email}</TableCell>
-                    <TableCell>{admin.branchId}</TableCell>
+                    <TableCell>{admin.user?.name || 'N/A'}</TableCell>
+                    <TableCell>{admin.user?.email || 'N/A'}</TableCell>
+                    <TableCell>{admin.branch?.name || 'N/A'}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveAdmin(admin.branchId, admin.userId)}
-                      >
-                        Hapus
-                      </Button>
+                      {user?.role === Role.OWNER_CABANG && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveAdmin(admin.branchId, admin.userId)}
+                        >
+                          Hapus
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
