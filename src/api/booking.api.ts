@@ -102,7 +102,6 @@ class BookingApi {
       console.log('Original booking data:', data);
       
       // Konversi waktu lokal ke UTC untuk dikirim ke server
-      const bookingDate = new Date(data.bookingDate);
       
       // Gabungkan tanggal dan waktu, lalu konversi ke UTC
       const startDateTime = combineDateAndTime(data.bookingDate, data.startTime);
