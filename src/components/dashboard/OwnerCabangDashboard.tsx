@@ -14,25 +14,6 @@ import { PeriodFilter, PeriodType } from './filters/PeriodFilter';
 import { useState } from 'react';
 
 // Mendefinisikan tipe data yang diharapkan oleh komponen tabel
-type Branch = {
-  id: string;
-  name: string;
-  location: string;
-  status: "active" | "inactive";
-  adminCount: number;
-  fieldCount: number;
-};
-
-type BranchAdmin = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  branch: string;
-  status: "active" | "inactive";
-  role: string;
-  lastActive: string;
-};
 
 export const OwnerCabangDashboard = () => {
   // State untuk periode yang dipilih
@@ -97,18 +78,28 @@ export const OwnerCabangDashboard = () => {
   };
 
   // Fungsi untuk mengkonversi data cabang dari API ke format yang diharapkan oleh komponen
-  const formatBranches = (branches: OwnerCabangStats['branches'] = []): Branch[] => {
+  const formatBranches = (branches: OwnerCabangStats['branches'] = []): { id: string; name: string; location: string; status: 'active' | 'inactive'; adminCount: number; fieldCount: number; }[] => {
     return branches.map(branch => ({
-      ...branch,
+      id: branch.id,
+      name: branch.name,
+      location: branch.location,
       // Mengkonversi status string menjadi "active" | "inactive"
-      status: branch.status.toLowerCase() === 'active' ? 'active' : 'inactive'
+      status: branch.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
+      adminCount: branch.adminCount,
+      fieldCount: branch.fieldCount
     }));
   };
 
   // Fungsi untuk mengkonversi data admin dari API ke format yang diharapkan oleh komponen
-  const formatAdmins = (admins: OwnerCabangStats['admins'] = []): BranchAdmin[] => {
+  const formatAdmins = (admins: OwnerCabangStats['admins'] = []): { id: string; name: string; email: string; phone: string; branch: string; status: 'active' | 'inactive'; role: string; lastActive: string; }[] => {
     return admins.map(admin => ({
-      ...admin,
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      phone: admin.phone,
+      branch: admin.branch,
+      role: admin.role,
+      lastActive: admin.lastActive,
       // Mengkonversi status string menjadi "active" | "inactive"
       status: admin.status.toLowerCase() === 'active' ? 'active' : 'inactive'
     }));

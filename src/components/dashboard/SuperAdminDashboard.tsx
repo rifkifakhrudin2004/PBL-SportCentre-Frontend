@@ -11,15 +11,7 @@ import { BranchAdminsTable } from './tables/BranchAdminsTable';
 import { useState } from 'react';
 import { PeriodFilter, PeriodType } from './filters/PeriodFilter';
 
-// Mendefinisikan tipe data yang diharapkan oleh komponen tabel
-type Branch = {
-  id: string;
-  name: string;
-  location: string;
-  status: "active" | "inactive";
-  adminCount: number;
-  fieldCount: number;
-};
+
 
 export const SuperAdminDashboard = () => {
   // State untuk toggle view dan periode
@@ -30,9 +22,13 @@ export const SuperAdminDashboard = () => {
   const typedStats = stats as SuperAdminStats;
   
   // Fungsi untuk mengkonversi data cabang dari API ke format yang diharapkan oleh komponen
-  const formatBranches = (branches: SuperAdminStats['branches'] = []): Branch[] => {
+  const formatBranches = (branches: SuperAdminStats['branches'] = []): { id: string; name: string; location: string; status: 'active' | 'inactive'; adminCount: number; fieldCount: number; }[] => {
     return branches.map(branch => ({
-      ...branch,
+      id: branch.id,
+      name: branch.name,
+      location: branch.location,
+      adminCount: branch.adminCount,
+      fieldCount: branch.fieldCount,
       // Mengkonversi status string menjadi "active" | "inactive"
       status: branch.status.toLowerCase() === 'active' ? 'active' : 'inactive'
     }));
