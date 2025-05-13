@@ -1,5 +1,5 @@
 import axiosInstance from '../config/axios.config';
-import { LoginRequest, RegisterRequest, UserWithToken, User } from '../types';
+import { LoginRequest, RegisterRequest, UserWithToken } from '../types';
 import { hasAuthCookie } from '@/utils/cookie.utils';
 
 class AuthApi {
@@ -66,16 +66,6 @@ class AuthApi {
       console.error('Error refreshing token:', error);
       throw error;
     }
-  }
-  
-  /**
-   * Update profil pengguna
-   * @param data - Data profil yang akan diupdate
-   * @returns Promise dengan data user yang diupdate
-   */
-  async updateProfile(userId: number, data: { name: string; phone?: string }): Promise<User> {
-    const response = await axiosInstance.put<{ user: User }>(`/users/${userId}`, data);
-    return response.data.user;
   }
 }
 

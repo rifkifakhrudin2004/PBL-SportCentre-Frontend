@@ -27,29 +27,12 @@ export const dashboardApi = {
    */
   getDashboardStats: async (role: Role, period: PeriodType = 'monthly'): Promise<DashboardStatsResponse> => {
     try {
-      let response;
+      // Gunakan satu endpoint tunggal untuk semua role
+      const response = await axiosInstance.get<DashboardStatsResponse>(`/dashboard/stats`, {
+        params: { period }
+      });
       
-      // Untuk OWNER_CABANG bisa memanfaatkan endpoint dari booking controller yang sudah dioptimalkan
-      if (role === Role.OWNER_CABANG) {
-        // URL yang benar menggunakan /bookings bukan /booking sesuai dengan konfigurasi di backend
-        response = await axiosInstance.get<{data: OwnerCabangStats, status: boolean}>(`/bookings/owner/dashboard/stats`, {
-          params: { period }
-        });
-        
-        // Jika response dalam format { data: ... }
-        if (response.data && response.data.data) {
-          return response.data.data;
-        }
-        
-        return response.data as unknown as OwnerCabangStats;
-      } else {
-        // Untuk role lain, tetap gunakan endpoint dashboard
-        response = await axiosInstance.get<DashboardStatsResponse>(`/dashboard/stats`, {
-          params: { role, period }
-        });
-        
-        return response.data;
-      }
+      return response.data;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       throw error;

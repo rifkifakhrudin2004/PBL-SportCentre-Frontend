@@ -101,7 +101,7 @@ export const AdminCabangDashboard = () => {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <RevenueChart 
-          data={typedStats?.incomeData || defaultChartData}
+          data={typedStats?.revenueData || defaultChartData}
           isLoading={isLoading}
           percentIncrease={8}
           title={`Pendapatan ${selectedPeriod === 'daily' ? 'Harian' : selectedPeriod === 'yearly' ? 'Tahunan' : 'Bulanan'}`}

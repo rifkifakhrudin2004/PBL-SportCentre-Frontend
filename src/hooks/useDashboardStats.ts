@@ -33,7 +33,7 @@ export interface AdminCabangStats {
     categories: string[];
     series: number[];
   };
-  incomeData: {
+  revenueData: {
     categories: string[];
     series: number[];
   };

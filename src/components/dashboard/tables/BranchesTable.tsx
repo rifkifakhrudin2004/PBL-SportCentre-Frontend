@@ -10,18 +10,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Building2, MapPin, User } from "lucide-react";
-
-interface Branch {
-  id: string;
-  name: string;
-  location: string;
-  status: 'active' | 'inactive';
-  adminCount: number;
-  fieldCount: number;
-}
+import { BranchView } from "@/types";
 
 interface BranchesTableProps {
-  branches: Branch[];
+  branches: BranchView[];
   title?: string;
   caption?: string;
   isLoading?: boolean;

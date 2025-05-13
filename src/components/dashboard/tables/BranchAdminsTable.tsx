@@ -11,20 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Building2, Mail, Phone } from "lucide-react";
-
-interface BranchAdmin {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  branch: string;
-  status: 'active' | 'inactive';
-  role: string;
-  lastActive: string;
-}
+import { BranchAdminView } from "@/types";
 
 interface BranchAdminsTableProps {
-  admins: BranchAdmin[];
+  admins: BranchAdminView[];
   title?: string;
   caption?: string;
   isLoading?: boolean;
@@ -65,8 +55,8 @@ export function BranchAdminsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {admins.map((admin) => (
-                <TableRow key={admin.id}>
+              {admins.map((admin, index) => (
+                <TableRow key={`${admin.id}-${admin.email}-${index}`}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">

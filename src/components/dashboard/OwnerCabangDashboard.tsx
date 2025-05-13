@@ -1,5 +1,5 @@
 import { useDashboardStats, OwnerCabangStats } from '@/hooks/useDashboardStats';
-import { Role } from '@/types';
+import { Role, BranchAdminView, BranchView } from '@/types';
 import { StatCard } from './StatCard';
 import { Icons } from './DashboardIcons';
 import { RevenueChart } from './charts/RevenueChart';
@@ -78,7 +78,7 @@ export const OwnerCabangDashboard = () => {
   };
 
   // Fungsi untuk mengkonversi data cabang dari API ke format yang diharapkan oleh komponen
-  const formatBranches = (branches: OwnerCabangStats['branches'] = []): { id: string; name: string; location: string; status: 'active' | 'inactive'; adminCount: number; fieldCount: number; }[] => {
+  const formatBranches = (branches: OwnerCabangStats['branches'] = []): BranchView[] => {
     return branches.map(branch => ({
       id: branch.id,
       name: branch.name,
@@ -91,9 +91,9 @@ export const OwnerCabangDashboard = () => {
   };
 
   // Fungsi untuk mengkonversi data admin dari API ke format yang diharapkan oleh komponen
-  const formatAdmins = (admins: OwnerCabangStats['admins'] = []): { id: string; name: string; email: string; phone: string; branch: string; status: 'active' | 'inactive'; role: string; lastActive: string; }[] => {
-    return admins.map(admin => ({
-      id: admin.id,
+  const formatAdmins = (admins: OwnerCabangStats['admins'] = []): BranchAdminView[] => {
+    return admins.map((admin, index) => ({
+      id: `${admin.id}-${index}`, // Menambahkan index untuk memastikan keunikan
       name: admin.name,
       email: admin.email,
       phone: admin.phone,

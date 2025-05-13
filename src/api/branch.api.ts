@@ -56,6 +56,14 @@ class BranchApi {
   }
 
   /**
+   * Mendapatkan cabang yang dimiliki/dikelola oleh user yang login
+   */
+  async getUserBranches(params?: BranchListParams): Promise<BranchListResponse> {
+    const response = await axiosInstance.get<BranchListResponse>('/branches/owner-branches', { params });
+    return response.data;
+  }
+
+  /**
    * Mendapatkan detail cabang berdasarkan ID
    */
   async getBranchById(id: number): Promise<Branch> {

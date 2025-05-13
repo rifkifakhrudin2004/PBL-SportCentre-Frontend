@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import useAuth from '@/hooks/useAuth.hook';
-import { authApi } from '@/api/auth.api';
+import { userApi } from '@/api/user.api';
 
 const profileSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
@@ -48,7 +48,7 @@ export default function ProfilePage() {
 
     try {
       // Panggil API untuk update profil
-      const updatedUser = await authApi.updateProfile(user.id, {
+      const updatedUser = await userApi.updateUserProfile(user.id, {
         name: data.name,
         phone: data.phone
       });
