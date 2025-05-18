@@ -49,12 +49,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const authData = await authApi.getAuthStatus();
           if (authData && authData.user) {
             setUser(authData.user);
+          } else {
+            // Jika response sukses tapi tidak ada user
+            setUser(null);
+            // Force hard refresh halaman untuk membersihkan state jika ada inkonsistensi
+            window.location.reload();
           }
         } else {
           setUser(null);
         }
       } catch (error) {
-
         const axiosError = error as AxiosErrorResponse;
         if (axiosError.response?.status !== 401) {
           console.error('Error initializing auth:', error);
@@ -97,7 +101,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       await authApi.logout();
+      // Set user ke null untuk memastikan keadaan tidak terautentikasi
       setUser(null);
+      
+      // Force hard refresh halaman untuk membersihkan state
+      window.location.href = '/auth/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Tetap set user ke null bahkan jika terjadi error
+      setUser(null);
+      // Force hard refresh halaman untuk membersihkan state
+      window.location.href = '/auth/login';
     } finally {
       setIsLoading(false);
     }
