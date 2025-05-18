@@ -290,8 +290,14 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       // Refresh ketersediaan lapangan
       refreshAvailability();
       
-      // Arahkan ke halaman riwayat booking
-      router.push("/bookings/history");
+      // Cek apakah response berisi payment dengan paymentUrl
+      if (bookingResult.payment && bookingResult.payment.paymentUrl) {
+        // Redirect langsung ke halaman pembayaran Midtrans
+        window.location.href = bookingResult.payment.paymentUrl;
+      } else {
+        // Jika tidak ada paymentUrl, arahkan ke halaman riwayat booking
+        router.push("/bookings/history");
+      }
     } catch (error) {
       console.error("Booking error:", error);
       setError("Data booking salah. Silakan coba lagi.");

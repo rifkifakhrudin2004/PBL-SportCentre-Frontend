@@ -11,9 +11,9 @@ export default function BookingForm() {
     selectedBranchName,
     selectedStartTime,
     selectedEndTime,
-    times,
     form,
-    onSubmit
+    onSubmit,
+    loading
   } = useBooking();
 
   // Menggunakan custom hook untuk menghitung durasi
@@ -27,6 +27,13 @@ export default function BookingForm() {
     <div className="max-w-xl mx-auto bg-white shadow rounded-lg p-6 border border-gray-200">
       <h2 className="text-xl font-bold text-center mb-6">Pesanan Anda</h2>
       
+      {loading ? (
+        <div className="flex flex-col items-center py-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black mb-4"></div>
+          <p className="text-lg font-medium">Memproses pemesanan...</p>
+          <p className="text-sm text-gray-500">Mohon tunggu sebentar</p>
+        </div>
+      ) : (
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
@@ -88,10 +95,11 @@ export default function BookingForm() {
             className="w-full py-3 bg-black hover:bg-black/90 text-white font-medium rounded transition-all"
             disabled={selectedStartTime === "-" || !selectedEndTime}
           >
-            Booking Sekarang
+            Booking & Bayar Sekarang
           </Button>
         </div>
       </form>
+      )}
     </div>
   );
 } 

@@ -120,8 +120,8 @@ class BookingApi {
       console.log('Sending booking data to server:', requestData);
       
       const response = await axiosInstance.post<
-        { data: Booking } |
-        { booking: Booking }
+        { data: Booking & { payment?: Payment & { paymentUrl?: string } } } |
+        { booking: Booking & { payment?: Payment & { paymentUrl?: string } } }
       >('/bookings', requestData);
 
       // Format 1: { data: {...} }
