@@ -30,4 +30,16 @@ export interface FieldReview {
   rating: number;
   review?: string;
   createdAt: string;
+  user: {
+    id: number;
+    name: string;
+  };
+  field: {
+    id: number;
+    name: string;
+    branch: {
+      id: number;
+      name: string;
+    };
+  };
 } 
