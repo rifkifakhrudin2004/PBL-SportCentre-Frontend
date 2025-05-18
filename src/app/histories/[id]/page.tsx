@@ -27,11 +27,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { use } from 'react';
 
-export default function BookingDetailPage({ params }: { params: { id: string } }) {
+export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { toast } = useToast();
-  const bookingId = parseInt(params.id);
+  const { id } = use(params);
+  const bookingId = Number(id);
 
   const [booking, setBooking] = useState<BookingWithPayment | null>(null);
   const [field, setField] = useState<Field | null>(null);
@@ -46,15 +48,16 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
       setLoading(true);
       setError(null);
       try {
-        // Fetch booking details
         const bookingData = await bookingApi.getBookingById(bookingId);
         setBooking(bookingData);
 
-        // Fetch field details if booking data exists
-        if (bookingData && bookingData.fieldId) {
-          const fieldData = await fieldApi.getFieldById(bookingData.fieldId);
-          setField(fieldData);
+        if (bookingData.field) {
+          setField(bookingData.field);
+        } else if (bookingData.fieldId) {
+          const field = await fieldApi.getFieldById(bookingData.fieldId);
+          setField(field);
         }
+
       } catch (error) {
         console.error('Error fetching booking details:', error);
         setError('Gagal memuat detail booking. Silakan coba lagi nanti.');
@@ -78,11 +81,9 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
         description: 'Pembayaran berhasil diproses.',
       });
       
-      // Refresh booking data to get updated payment
       const updatedBooking = await bookingApi.getBookingById(bookingId);
       setBooking(updatedBooking);
       
-      // If payment has a payment URL (e.g., for Midtrans), redirect user
       if (payment.paymentUrl) {
         window.open(payment.paymentUrl, '_blank');
       }
@@ -183,7 +184,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
             {error || 'Booking tidak ditemukan'}
           </h1>
           <Button asChild>
-            <Link href="/bookings">Kembali ke Daftar Booking</Link>
+            <Link href="/histories">Kembali ke Daftar Booking</Link>
           </Button>
         </div>
       </div>
@@ -211,7 +212,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Tanggal Booking</h3>
                     <p className="text-base">
-                      {format(new Date(booking.bookingDate), 'dd MMMM yyyy', { locale: id })}
+                      {format(new Date(booking.bookingDate), 'dd MMMM yyyy')}
                     </p>
                   </div>
                   <div>
@@ -223,7 +224,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Tanggal Pemesanan</h3>
                   <p className="text-base">
-                    {format(new Date(booking.createdAt), 'dd MMMM yyyy, HH:mm', { locale: id })}
+                    {format(new Date(booking.createdAt), 'dd MMMM yyyy, HH:mm')}
                   </p>
                 </div>
 
@@ -281,7 +282,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                     <div>
                       <h3 className="text-sm font-medium text-gray-500">Tenggat Waktu</h3>
                       <p>
-                        {format(new Date(booking.payment.expiresDate), 'dd MMMM yyyy, HH:mm', { locale: id })}
+                        {format(new Date(booking.payment.expiresDate), 'dd MMMM yyyy, HH:mm')}
                       </p>
                     </div>
                   )}
@@ -347,7 +348,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
               )}
 
               <Button asChild variant="outline" className="w-full">
-                <Link href="/bookings">Kembali ke Daftar Booking</Link>
+                <Link href="/histories">Kembali ke Daftar Booking</Link>
               </Button>
             </CardContent>
           </Card>
