@@ -1,0 +1,79 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { format } from 'date-fns';
+import { Star, StarHalf } from 'lucide-react';
+import { FieldReview } from '@/types';
+import { fieldApi } from '@/api/field.api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { id } from 'date-fns/locale';
+
+export default function FieldReviewsClient({ fieldId }: { fieldId: number }) {
+  const [reviews, setReviews] = useState<FieldReview[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoading(true);
+      try {
+        const response = await fieldApi.getFieldReviews(fieldId);
+        console.log("reviews response data: ", response)
+        console.log("reviews response: ", response.data)
+        setReviews(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Error fetching field reviews:', error);
+        setReviews([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [fieldId]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (reviews.length === 0) {
+    return <p className="text-center text-gray-500 py-6">Belum ada ulasan</p>;
+  }
+
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<Star key={`full-${i}`} fill="currentColor" size={18} className="text-yellow-500" />);
+    }
+
+    if (hasHalfStar) {
+      stars.push(<StarHalf key="half" fill="currentColor" size={18} className="text-yellow-500" />);
+    }
+
+    return stars;
+  };
+
+  return (
+    <div className="space-y-4">
+      {reviews.map((review) => (
+        <Card key={review.id}>
+          <CardContent className="p-4">
+            <div className="flex items-center mb-2">
+              <div className="flex mr-2">{renderStars(review.rating)}</div>
+              <span className="text-sm text-gray-600">
+                {format(new Date(review.createdAt), 'dd MMM yyyy', { locale: id })}
+              </span>
+            </div>
+            {review.review && <p className="text-gray-700">{review.review}</p>}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+} 

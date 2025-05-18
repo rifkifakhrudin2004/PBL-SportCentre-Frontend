@@ -25,6 +25,7 @@ import {
   MapPin,
   Calendar,
   ChevronDown,
+  Clock,
 } from "lucide-react";
 
 export function Header() {
@@ -175,10 +176,10 @@ export function Header() {
                     Profil Saya
                   </DropdownMenuItem>
                 </Link>
-                <Link href="/notifications">
+                <Link href="/histories">
                   <DropdownMenuItem>
-                    <Bell size={16} className="mr-2" />
-                    Notifikasi
+                    <Clock size={16} className="mr-2" />
+                    Histori
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
@@ -276,11 +277,11 @@ export function Header() {
                       </SheetClose>
                       <SheetClose asChild>
                         <Link
-                          href="/notifications"
+                          href="/histories"
                           className="flex items-center gap-2 px-4 py-2 rounded-md text-sm hover:bg-muted"
                         >
-                          <Bell size={16} />
-                          Notifikasi
+                          <Clock size={16} />
+                          Histori
                         </Link>
                       </SheetClose>
                     </div>

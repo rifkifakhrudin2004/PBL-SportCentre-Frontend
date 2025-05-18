@@ -15,13 +15,34 @@ interface FieldResponseWithMeta {
   }
 }
 
+export interface FieldListParams {
+  page?: number;
+  limit?: number;
+  status?: 'active' | 'inactive';
+  search?: string;
+  q?: string;
+}
+
+interface FieldReviewResponseWithMeta {
+  data: FieldReview[];
+  meta: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }
+}
+
 class FieldApi {
   /**
    * Dapatkan semua lapangan
    * @returns Promise dengan array data lapangan
    */
-  async getAllFields(): Promise<FieldResponseWithMeta> {
-    const response = await axiosInstance.get<FieldResponseWithMeta>('/fields');
+  async getAllFields(params?: FieldListParams): Promise<FieldResponseWithMeta> {
+    const response = await axiosInstance.get<FieldResponseWithMeta>('/fields', {params});
+    console.log("fields data: ", response.data);
     return response.data;
   }
 
@@ -36,31 +57,21 @@ class FieldApi {
         { data: Field } | 
         { field: Field } | 
         Field | 
-        { status: boolean; message: string; data: { field: Field } }
+        { status: boolean; message: string; data: Field }
       >(`/fields/${id}`);
-      
-      // Handle format respons yang berbeda-beda
+
       if (response.data && typeof response.data === 'object') {
-        // Format 1: { data: {...} } (bukan format { status, message, data })
-        if ('data' in response.data && !('status' in response.data) && !('message' in response.data)) {
+        if ('data' in response.data && !('status' in response.data)) {
           return response.data.data;
-        }
-        // Format 2: { field: {...} }
-        else if ('field' in response.data && !('data' in response.data)) {
+        } else if ('field' in response.data) {
           return response.data.field;
-        }
-        // Format 3: Objek field langsung
-        else if ('id' in response.data && 'name' in response.data) {
+        } else if ('id' in response.data && 'name' in response.data) {
           return response.data as Field;
-        }
-        // Format 4: { status, message, data: { field } } - Format API baru
-        else if ('status' in response.data && 'message' in response.data && 'data' in response.data) {
-          if (response.data.data && typeof response.data.data === 'object' && 'field' in response.data.data) {
-            return response.data.data.field as Field;
-          }
+        } else if ('status' in response.data && 'message' in response.data && 'data' in response.data) {
+          return response.data.data as Field;
         }
       }
-      
+
       throw new Error('Unexpected response format');
     } catch (error) {
       console.error(`Error fetching field with ID ${id}:`, error);
@@ -190,9 +201,10 @@ class FieldApi {
    * @param fieldId - ID lapangan
    * @returns Promise dengan array data review
    */
-  async getFieldReviews(fieldId: number): Promise<FieldReview[]> {
-    const response = await axiosInstance.get<{ reviews: FieldReview[] }>(`/fields/${fieldId}/reviews`);
-    return response.data.reviews;
+  async getFieldReviews(fieldId: number): Promise<FieldReviewResponseWithMeta> {
+    const response = await axiosInstance.get<FieldReviewResponseWithMeta>(`/field-reviews?fieldId=${fieldId}`);
+    console.log("reviews data: ", response.data);
+    return response.data;
   }
 
   /**
@@ -271,7 +283,7 @@ class FieldApi {
         const responseData = response.data as any;
         
         if (responseData && responseData.success && Array.isArray(responseData.data)) {
-          console.log('Successfully fetched availability data:', responseData.data.length, 'fields');
+          // console.log('Successfully fetched availability data:', responseData.data.length, 'fields');
           
           // Iterasi setiap lapangan dalam respons
           responseData.data.forEach((fieldAvailability: any) => {
@@ -290,13 +302,13 @@ class FieldApi {
               const endTime = new Date(slot.end);
               
               // Log untuk debugging
-              console.log(`Slot original UTC - start: ${startTime.toISOString()}, end: ${endTime.toISOString()}`);
+              // console.log(`Slot original UTC - start: ${startTime.toISOString()}, end: ${endTime.toISOString()}`);
               
               // Gunakan timezone lokal untuk mendapatkan jam yang sesuai
               const localStartHour = startTime.getHours();
               const localEndHour = endTime.getHours();
               
-              console.log(`Slot hours - start: ${localStartHour}:00, end: ${localEndHour}:00`);
+              // console.log(`Slot hours - start: ${localStartHour}:00, end: ${localEndHour}:00`);
               
               // Penanganan khusus: jika slot mencakup 00:00-24:00 (seluruh hari)
               if (startTime.getHours() === 0 && endTime.getHours() === 0 &&
@@ -322,8 +334,8 @@ class FieldApi {
             const bookedHours = times.filter(time => !Array.from(availableHoursSet).includes(time));
             
             // Debug output
-            console.log(`Field #${fieldId}: Available hours:`, Array.from(availableHoursSet));
-            console.log(`Field #${fieldId}: Booked hours:`, bookedHours);
+            // console.log(`Field #${fieldId}: Available hours:`, Array.from(availableHoursSet));
+            // console.log(`Field #${fieldId}: Booked hours:`, bookedHours);
             
             // Simpan jam yang terpesan untuk lapangan ini
             booked[fieldId] = bookedHours;
@@ -354,7 +366,7 @@ class FieldApi {
             return bookingDate === selectedDate;
           });
           
-          console.log('Relevant bookings found:', relevantBookings.length);
+          // console.log('Relevant bookings found:', relevantBookings.length);
           
           // Kelompokkan booking berdasarkan lapangan
           relevantBookings.forEach((booking: Booking) => {
@@ -381,7 +393,7 @@ class FieldApi {
         }
       }
       
-      console.log('Final booked slots:', booked);
+      // console.log('Final booked slots:', booked);
       return booked;
     } catch (error) {
       console.error("Error fetching booked time slots:", error);

@@ -15,20 +15,28 @@ export default function BranchDetailPage() {
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const limit = 1000;
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Mengambil data cabang
         const branchId = parseInt(params.id);
-        const branchData = await branchApi.getBranchById(branchId);
-        setBranch(branchData);
+        const branchResponse = await branchApi.getBranchById(branchId);
+        if (branchResponse) {
+          setBranch(Array.isArray(branchResponse.data) ? branchResponse.data[0] : branchResponse.data);
+        } else {
+          throw new Error('Data cabang tidak ditemukan.');
+        }
 
-        // Mengambil daftar lapangan di cabang ini
-        const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
-        setFields(fieldsData);
+        const fieldsResponse = await fieldApi.getAllFields({limit});
+
+        let filteredFields: Field[] = [];
+        filteredFields = fieldsResponse.data || [];
+        
+        const branchFields = filteredFields.filter((field) => field.branchId === branchId);
+        setFields(branchFields);        
       } catch (err) {
         console.error('Error fetching branch details:', err);
         setError('Gagal memuat data cabang. Silakan coba lagi nanti.');
@@ -78,15 +86,24 @@ export default function BranchDetailPage() {
   return (
     <div className="container py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{branch.name}</h1>
-        <p className="text-muted-foreground">{branch.location}</p>
+        <h1 className="text-3xl font-bold mb-2">{branch?.name}</h1>
+        <p className="text-muted-foreground">{branch?.location}</p>
       </div>
 
       {branch.imageUrl && (
-        <div
-          className="w-full h-64 bg-muted rounded-lg mb-8 bg-cover bg-center"
-          style={{ backgroundImage: `url(${branch.imageUrl})` }}
-        ></div>
+        <div className="w-full h-64 bg-muted rounded-lg mb-8">
+          <img
+            src={branch.imageUrl || "../images/img_not_found.png"}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.onerror = null;
+              target.src = "../images/img_not_found.png";
+              target.className = "h-full w-full object-contain";
+            }}
+            alt={branch.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
       )}
 
       <div className="mb-8">
@@ -107,14 +124,19 @@ export default function BranchDetailPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div 
-                    className="h-[140px] rounded-md bg-muted mb-4 bg-cover bg-center"
-                    style={{
-                      backgroundImage: field.imageUrl
-                        ? `url(${field.imageUrl})`
-                        : 'none',
-                    }}
-                  />
+                  <div className="h-[140px] rounded-md bg-muted mb-4 bg-cover bg-center">
+                    <img
+                      src={field.imageUrl || "../images/img_not_found.png"}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "../images/img_not_found.png";
+                        target.className = "h-full w-full object-contain";
+                      }}
+                      alt={field.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Harga (Siang):</span>
@@ -131,7 +153,7 @@ export default function BranchDetailPage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Link href={`/fields/${field.id}/book`} className="w-full">
+                  <Link href={`/bookings`} className="w-full">
                     <Button 
                       className="w-full"
                       disabled={field.status !== 'available'}
