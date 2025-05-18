@@ -47,7 +47,7 @@ export default function BranchDetailPage() {
       try {
         // Dapatkan detail cabang
         const branchData = await branchApi.getBranchById(branchId);
-        setBranch(branchData);
+        setBranch(Array.isArray(branchData.data) ? branchData.data[0] : branchData.data);
 
         // Dapatkan daftar lapangan di cabang
         const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
