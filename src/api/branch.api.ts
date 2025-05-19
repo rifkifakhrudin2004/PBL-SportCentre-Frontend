@@ -50,19 +50,93 @@ class BranchApi {
   /**
    * Mendapatkan daftar cabang
    */
-  async getBranches(params?: BranchListParams): Promise<BranchListResponse> {
-    const response = await axiosInstance.get<BranchListResponse>('/branches', { params });
-          return response.data;
+  async getBranches({ status }: { status?: string } = {}): Promise<{ data: Branch[] }> {
+    try {
+      const params: Record<string, string> = {};
+      if (status) params.status = status;
+      
+      const response = await axiosInstance.get<{ 
+        data: Branch[], 
+        status?: boolean,
+        message?: string 
+      }>('/branches', { params });
+      
+      // Handle different API response formats
+      if (response.data) {
+        // Format 1: { status: true, data: [...] }
+        if ('status' in response.data && 'data' in response.data && Array.isArray(response.data.data)) {
+          return { data: response.data.data };
+        } 
+        // Format 2: { data: [...] }
+        else if ('data' in response.data && Array.isArray(response.data.data)) {
+          return { data: response.data.data };
+        } 
+        // Format 3: Array langsung [...]
+        else if (Array.isArray(response.data)) {
+          return { data: response.data };
+        }
+      }
+      
+      // Fallback jika tidak ada data yang valid
+      return { data: [] };
+    } catch (error) {
+      console.error('Error fetching branches:', error);
+      throw new Error('Failed to fetch branches');
+    }
   }
 
   /**
    * Mendapatkan cabang yang dimiliki/dikelola oleh user yang login
    */
-  async getUserBranches(params?: BranchListParams): Promise<BranchListResponse> {
-    const response = await axiosInstance.get<BranchListResponse>('/branches/owner-branches', { params });
-    return response.data;
+  async getUserBranches(): Promise<{ data: Branch[] }> {
+    try {
+      const response = await axiosInstance.get<{ data: Branch[], status?: boolean, message?: string }>('/branches/managed');
+      // Handle different API response formats
+      if (response.data) {
+        if ('data' in response.data && Array.isArray(response.data.data)) {
+          return { data: response.data.data };
+        } else if (Array.isArray(response.data)) {
+          return { data: response.data };
+        }
+      }
+      return { data: [] };
+    } catch (error) {
+      console.error('Error fetching managed branches:', error);
+      throw new Error('Failed to fetch managed branches');
+    }
   }
-
+  // Tambahkan di branch.api.ts
+ async getUserManagedBranches(): Promise<{ data: Branch[] }> {
+    try {
+      const response = await axiosInstance.get<{ 
+        data: Branch[], 
+        status?: boolean, 
+        message?: string 
+      }>('/branches/managed');
+      
+      // Handle different API response formats
+      if (response.data) {
+        // Format 1: { status: true, data: [...] }
+        if ('status' in response.data && 'data' in response.data && Array.isArray(response.data.data)) {
+          return { data: response.data.data };
+        } 
+        // Format 2: { data: [...] }
+        else if ('data' in response.data && Array.isArray(response.data.data)) {
+          return { data: response.data.data };
+        } 
+        // Format 3: Array langsung [...]
+        else if (Array.isArray(response.data)) {
+          return { data: response.data };
+        }
+      }
+      
+      // Fallback jika tidak ada data yang valid
+      return { data: [] };
+    } catch (error) {
+      console.error('Error fetching managed branches:', error);
+      throw new Error('Failed to fetch managed branches');
+    }
+  }
   /**
    * Mendapatkan detail cabang berdasarkan ID
    */

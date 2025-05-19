@@ -1,3 +1,4 @@
+// File: field.api.ts
 import axiosInstance from '../config/axios.config';
 import { Field, FieldReview, FieldType, Booking } from '../types';
 import { bookingApi } from './booking.api';
@@ -14,6 +15,18 @@ interface FieldResponseWithMeta {
     hasPrevPage: boolean;
   }
 }
+interface StandardResponse {
+  status: boolean;
+  message: string;
+  data: Field;
+}
+
+interface LegacyFieldResponse {
+  field: Field;
+}
+
+// Union type for all possible response formats
+type FieldCreateResponse = StandardResponse | LegacyFieldResponse | Field;
 
 class FieldApi {
   /**
@@ -75,30 +88,47 @@ class FieldApi {
    */
   async getFieldsByBranchId(branchId: number): Promise<Field[]> {
     try {
-      const response = await axiosInstance.get<FieldResponseWithMeta | { fields: Field[] } | Field[]>(`/branches/${branchId}/fields`);
-      
-      // Handle format respons yang berbeda-beda
-      if (response.data && typeof response.data === 'object') {
-        // Format 1: { data: [...], meta: {...} }
-        if ('data' in response.data && Array.isArray(response.data.data)) {
-          return response.data.data;
-        }
-        // Format 2: { fields: [...] }
-        else if ('fields' in response.data && Array.isArray(response.data.fields)) {
-          return response.data.fields;
-        }
-        // Format 3: Array langsung [...]
-        else if (Array.isArray(response.data)) {
-          return response.data;
-        }
+      // Validasi branchId
+      if (!branchId || isNaN(Number(branchId))) {
+        throw new Error('Branch ID is required and must be a valid number');
       }
       
-      // Jika format tidak dikenali, kembalikan array kosong
-      console.error('Unexpected response format:', response.data);
+      // Konversi ke number untuk memastikan tipe data yang sesuai
+      const numericBranchId = Number(branchId);
+      
+      // Logging untuk debugging
+      console.log('Sending request to /fields/admin with branchId:', numericBranchId);
+      
+      const response = await axiosInstance.get<{ 
+        data: Field[],
+        status?: boolean,
+        meta?: {
+          total: number,
+          allowedBranches?: number[]
+        }
+      }>('/fields', {
+        params: {
+          branchId: numericBranchId  // Pastikan kirim sebagai number
+        }
+      });
+      
+      // Periksa dan ekstrak data lapangan dari berbagai format respons yang mungkin
+      if (response.data && 'data' in response.data && Array.isArray(response.data.data)) {
+        console.log('Response data received:', response.data.data.length, 'fields');
+        return response.data.data;
+      } else if (Array.isArray(response.data)) {
+        console.log('Response data received (direct array):', response.data.length, 'fields');
+        return response.data;
+      }
+      
+      console.log('No valid data format found in response:', response.data);
+      // Fallback jika format tidak sesuai ekspektasi
       return [];
-    } catch (error) {
-      console.error(`Error fetching fields for branch ID ${branchId}:`, error);
-      return [];
+    } catch (error: any) {
+      // Tambahkan logging lebih rinci
+      console.error("Failed to fetch fields:", error);
+      console.error("Error details:", error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || "Cannot load fields");
     }
   }
 
@@ -386,6 +416,36 @@ class FieldApi {
     } catch (error) {
       console.error("Error fetching booked time slots:", error);
       return {};
+    }
+  }
+    async createFieldWithImage(formData: FormData): Promise<Field> {
+    try {
+      const response = await axiosInstance.post<FieldCreateResponse>('/fields', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Handle berbagai format respons yang mungkin
+      const responseData = response.data;
+
+      // Format API baru: { status, message, data }
+      if ('status' in responseData && 'data' in responseData) {
+        return responseData.data;
+      }
+      // Format lama: { field: {...} }
+      else if ('field' in responseData) {
+        return responseData.field;
+      }
+      // Field object directly returned
+      else if ('id' in responseData) {
+        return responseData;
+      }
+      
+      throw new Error('Unexpected response format');
+    } catch (error) {
+      console.error('Error creating field with image:', error);
+      throw error;
     }
   }
 }
