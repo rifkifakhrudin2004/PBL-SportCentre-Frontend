@@ -63,8 +63,8 @@ export default function FieldsPage() {
     router.push(`/dashboard/fields/${id}`);
   };
 
-  // Redirect jika bukan admin cabang
-  if (user && user.role !== Role.ADMIN_CABANG) {
+  // Redirect jika bukan super admin admin cabang
+  if (user && user.role !== Role.SUPER_ADMIN && user.role !== Role.OWNER_CABANG) {
     router.push('/dashboard');
     return null;
   }

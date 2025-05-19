@@ -10,8 +10,7 @@ import { BranchesTable } from './tables/BranchesTable';
 import { BranchAdminsTable } from './tables/BranchAdminsTable';
 import { useState } from 'react';
 import { PeriodFilter, PeriodType } from './filters/PeriodFilter';
-
-
+import { useRouter } from 'next/navigation';
 
 export const SuperAdminDashboard = () => {
   // State untuk toggle view dan periode
@@ -20,6 +19,11 @@ export const SuperAdminDashboard = () => {
   
   const { stats, isLoading, error } = useDashboardStats(Role.SUPER_ADMIN, selectedPeriod);
   const typedStats = stats as SuperAdminStats;
+
+  const router = useRouter();
+    const handleAddBranch = () => {
+    router.push('/dashboard/branches/create');
+  };
   
   // Fungsi untuk mengkonversi data cabang dari API ke format yang diharapkan oleh komponen
   const formatBranches = (branches: SuperAdminStats['branches'] = []): { id: string; name: string; location: string; status: 'active' | 'inactive'; adminCount: number; fieldCount: number; }[] => {
@@ -65,7 +69,7 @@ export const SuperAdminDashboard = () => {
             defaultValue={selectedPeriod}
             isLoading={isLoading}
           />
-          <Button className="gap-1">
+          <Button onClick={handleAddBranch} className="gap-1">
             <Plus className="h-4 w-4" />
             <span>Tambah Cabang</span>
           </Button>
@@ -208,7 +212,8 @@ export const SuperAdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col gap-1 border-dashed">
+              <Button onClick={() => router.push('/dashboard/admins/add')}
+              variant="outline" className="h-20 flex flex-col gap-1 border-dashed">
                 <CircleUser className="h-5 w-5" />
                 <span className="text-xs">Tambah Admin Baru</span>
               </Button>
