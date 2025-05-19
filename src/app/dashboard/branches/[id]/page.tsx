@@ -38,6 +38,7 @@ export default function BranchDetailPage() {
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddFieldForm, setShowAddFieldForm] = useState(false);
   const branchId = parseInt(params.id as string);
 
   useEffect(() => {
@@ -45,15 +46,12 @@ export default function BranchDetailPage() {
       setIsLoading(true);
       setError(null);
       try {
-        // Dapatkan detail cabang
         const branchData = await branchApi.getBranchById(branchId);
         setBranch(branchData);
 
-        // Dapatkan daftar lapangan di cabang
         const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
         setFields(fieldsData);
 
-        // Dapatkan daftar admin cabang
         const adminsData = await branchApi.getBranchAdmins(branchId);
         setAdmins(adminsData);
       } catch (err) {
@@ -69,7 +67,6 @@ export default function BranchDetailPage() {
     }
   }, [branchId]);
 
-  // Redirect jika bukan super admin atau owner cabang
   if (user && user.role !== Role.SUPER_ADMIN && user.role !== Role.OWNER_CABANG) {
     router.push('/dashboard');
     return null;
@@ -83,8 +80,6 @@ export default function BranchDetailPage() {
     if (window.confirm('Anda yakin ingin menghapus cabang ini?')) {
       try {
         await branchApi.deleteBranch(branchId);
-        
-        // Redirect setelah berhasil menghapus
         if (user?.role === Role.SUPER_ADMIN) {
           router.push('/dashboard/branches');
         } else {
@@ -98,7 +93,7 @@ export default function BranchDetailPage() {
   };
 
   const handleAddField = () => {
-    router.push(`/dashboard/fields/create?branchId=${branchId}`);
+    setShowAddFieldForm(!showAddFieldForm);
   };
 
   const handleAddAdmin = () => {
@@ -193,9 +188,41 @@ export default function BranchDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Daftar Lapangan</CardTitle>
-              <Button onClick={handleAddField}>Tambah Lapangan</Button>
+              <Button onClick={handleAddField}>
+                {showAddFieldForm ? 'Tutup Form' : 'Tambah Lapangan'}
+              </Button>
             </CardHeader>
             <CardContent>
+              {showAddFieldForm && (
+                <div className="mb-6 p-4 border rounded-md bg-gray-50">
+                  <h3 className="text-lg font-semibold mb-4">Form Tambah Lapangan</h3>
+                  <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium">Nama Lapangan</label>
+                      <input type="text" className="mt-1 block w-full border rounded p-2" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium">Tipe</label>
+                      <input type="text" className="mt-1 block w-full border rounded p-2" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium">Harga Siang</label>
+                      <input type="number" className="mt-1 block w-full border rounded p-2" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium">Harga Malam</label>
+                      <input type="number" className="mt-1 block w-full border rounded p-2" />
+                    </div>
+                    <div className="md:col-span-2 flex justify-end gap-2">
+                      <Button type="button" onClick={() => setShowAddFieldForm(false)} variant="secondary">
+                        Batal
+                      </Button>
+                      <Button type="submit">Simpan</Button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
               {fields.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Belum ada lapangan di cabang ini
@@ -291,4 +318,4 @@ export default function BranchDetailPage() {
       </Tabs>
     </div>
   );
-} 
+}

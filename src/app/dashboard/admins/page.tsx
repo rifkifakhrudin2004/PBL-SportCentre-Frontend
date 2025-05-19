@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import { Role, BranchAdmin } from '@/types';
 import { useAuth } from '@/context/auth/auth.context';
@@ -22,6 +22,7 @@ export default function AdminsPage() {
   const [admins, setAdmins] = useState<BranchAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAddFormOpen, setIsAddFormOpen] = useState(false); // untuk toggle form
   const router = useRouter();
   const { user } = useAuth();
 
@@ -29,7 +30,6 @@ export default function AdminsPage() {
     const fetchAdmins = async () => {
       try {
         setIsLoading(true);
-        // Menggunakan endpoint baru untuk mendapatkan admin dari cabang yang dimiliki/dikelola
         const adminList = await userApi.getUserBranchAdmins(searchQuery || undefined);
         setAdmins(adminList);
       } catch (error) {
@@ -48,13 +48,12 @@ export default function AdminsPage() {
   };
 
   const handleAddAdmin = () => {
-    router.push('/dashboard/admins/add');
+    setIsAddFormOpen(true); // tampilkan form
   };
 
   const handleRemoveAdmin = async (branchId: number, userId: number) => {
     try {
       await branchApi.removeBranchAdmin(branchId, userId);
-      // Refresh daftar admin setelah menghapus
       setAdmins(admins.filter(admin => admin.userId !== userId || admin.branchId !== branchId));
     } catch (error) {
       console.error('Error removing admin:', error);
@@ -62,7 +61,19 @@ export default function AdminsPage() {
     }
   };
 
-  // Redirect jika bukan owner cabang atau admin cabang
+  const handleSubmitAddAdmin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name');
+    const email = formData.get('email');
+    // TODO: Kirim ke API kalau sudah siap
+    console.log('Admin baru:', { name, email });
+
+    alert('Admin berhasil ditambahkan (dummy)');
+    setIsAddFormOpen(false);
+    e.currentTarget.reset(); // reset form
+  };
+
   if (user && user.role !== Role.OWNER_CABANG && user.role !== Role.ADMIN_CABANG && user.role !== Role.SUPER_ADMIN) {
     router.push('/dashboard');
     return null;
@@ -76,6 +87,54 @@ export default function AdminsPage() {
           <Button onClick={handleAddAdmin}>Tambah Admin</Button>
         )}
       </div>
+
+      {isAddFormOpen && (
+        <Card className="mb-6 max-w-xl">
+          <CardHeader>
+            <CardTitle>Tambah Admin</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmitAddAdmin} className="space-y-4">
+              <div>
+                <label className="block mb-1 font-medium">Nama</label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  className="w-full border px-2 py-1 rounded"
+                  placeholder="Masukkan nama"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  className="w-full border px-2 py-1 rounded"
+                  placeholder="Masukkan email"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">Cabang</label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  className="w-full border px-2 py-1 rounded"
+                  placeholder="Masukkan cabang"
+                />
+              </div>
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="outline" onClick={() => setIsAddFormOpen(false)}>
+                  Batal
+                </Button>
+                <Button type="submit">Simpan</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="mb-6">
         <CardHeader>
@@ -142,4 +201,4 @@ export default function AdminsPage() {
       </Card>
     </div>
   );
-} 
+}
