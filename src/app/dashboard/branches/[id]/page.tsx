@@ -47,7 +47,7 @@ export default function BranchDetailPage() {
       setError(null);
       try {
         const branchData = await branchApi.getBranchById(branchId);
-        setBranch(branchData);
+        setBranch(Array.isArray(branchData.data) ? branchData.data[0] : branchData.data);
 
         const fieldsData = await fieldApi.getFieldsByBranchId(branchId);
         setFields(fieldsData);

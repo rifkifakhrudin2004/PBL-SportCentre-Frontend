@@ -54,6 +54,7 @@ export default function BookingPage() {
   const [field, setField] = useState<Field | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const fieldId = parseInt(params.id as string);
@@ -147,8 +148,16 @@ export default function BookingPage() {
       // Buat booking
       const response = await bookingApi.createBooking(bookingData);
       
-      // Redirect ke halaman pembayaran atau detail booking
-      router.push(`/bookings/${response.id}`);
+      // Cek apakah response berisi payment dengan paymentUrl
+      if (response.payment && response.payment.paymentUrl) {
+        // Set state redirecting sebelum pindah ke halaman Midtrans
+        setIsRedirecting(true);
+        // Redirect langsung ke halaman pembayaran Midtrans
+        window.location.href = response.payment.paymentUrl;
+      } else {
+        // Jika tidak ada paymentUrl, arahkan ke halaman detail booking
+        router.push(`/bookings/${response.id}`);
+      }
     } catch (err) {
       console.error('Error creating booking:', err);
       setError('Gagal membuat reservasi. Silakan coba lagi.');
@@ -171,6 +180,18 @@ export default function BookingPage() {
       <div className="container mx-auto py-10">
         <div className="flex justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isRedirecting) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+          <p className="text-lg font-medium">Mengalihkan ke halaman pembayaran...</p>
+          <p className="text-sm text-muted-foreground">Mohon tunggu sebentar</p>
         </div>
       </div>
     );
@@ -261,7 +282,7 @@ export default function BookingPage() {
               <CardHeader>
                 <CardTitle>Formulir Pemesanan</CardTitle>
                 <CardDescription>
-                  Pilih tanggal, waktu, dan durasi pemesanan Anda
+                  Pilih tanggal, waktu, dan durasi pemesanan Anda. Setelah melakukan pemesanan, Anda akan dialihkan ke halaman pembayaran Midtrans.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -408,7 +429,7 @@ export default function BookingPage() {
                         Batal
                       </Button>
                       <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Memproses...' : 'Pesan Sekarang'}
+                        {isSubmitting ? 'Memproses...' : 'Pesan & Bayar Sekarang'}
                       </Button>
                     </div>
                   </form>

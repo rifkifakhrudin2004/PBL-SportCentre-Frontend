@@ -84,6 +84,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const user = useAuth();
   const userId = user?.user?.id || 0;
+  const limit = 1000;
   
   const times = useMemo(() => [
     "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
@@ -174,8 +175,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         }
         
         // Ambil data lapangan
-        const fields = await fieldApi.getAllFields();
-        setFields(Array.isArray(fields) ? fields : []);
+        const fields = await fieldApi.getAllFields({limit});
+        setFields(Array.isArray(fields.data) ? fields.data : []);
         
         setLoading(false);
       } catch (error) {
@@ -290,8 +291,14 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       // Refresh ketersediaan lapangan
       refreshAvailability();
       
-      // Arahkan ke halaman riwayat booking
-      router.push("/bookings/history");
+      // Cek apakah response berisi payment dengan paymentUrl
+      if (bookingResult.payment && bookingResult.payment.paymentUrl) {
+        // Redirect langsung ke halaman pembayaran Midtrans
+        window.location.href = bookingResult.payment.paymentUrl;
+      } else {
+        // Jika tidak ada paymentUrl, arahkan ke halaman riwayat booking
+        router.push("/bookings/history");
+      }
     } catch (error) {
       console.error("Booking error:", error);
       setError("Data booking salah. Silakan coba lagi.");

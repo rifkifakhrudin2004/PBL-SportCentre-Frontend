@@ -20,17 +20,17 @@ class BookingApi {
    * Dapatkan semua booking untuk user saat ini
    * @returns Promise dengan array data booking
    */
-  async getUserBookings(): Promise<Booking[]> {
+  async getUserBookings(userId: Number = 0): Promise<Booking[]> {
     try {
       // Mendapatkan ID user dari localStorage
-      const userStr = localStorage.getItem('user');
-      if (!userStr) {
-        console.error('User tidak ditemukan di localStorage');
-        return [];
-      }
+      // const userStr = localStorage.getItem('user');
+      // if (!userStr) {
+      //   console.error('User tidak ditemukan di localStorage');
+      //   return [];
+      // }
       
-      const user = JSON.parse(userStr);
-      const userId = user?.id;
+      // const user = useAuth();
+      // const userId = this.userId;
       
       if (!userId) {
         console.error('User ID tidak ditemukan');
@@ -39,7 +39,7 @@ class BookingApi {
       
       // Gunakan endpoint yang benar sesuai dengan backend
       const response = await axiosInstance.get<BookingResponseWithMeta | { bookings: Booking[] } | Booking[]>(
-        `/users/${userId}/bookings`
+        `/bookings/users/${userId}/bookings`
       );
       
       // Handle format respons yang berbeda-beda
@@ -74,15 +74,14 @@ class BookingApi {
    */
   async getBookingById(id: number): Promise<Booking> {
     try {
-      const response = await axiosInstance.get<{ data: Booking } | { booking: Booking }>(`/bookings/${id}`);
+      const response = await axiosInstance.get<{ data: Booking } | { booking: Booking }>(`/bookings/${id}/user`);
       
-      // Format 1: { data: {...} }
       if ('data' in response.data) {
         return response.data.data;
-      }
-      // Format 2: { booking: {...} }
-      else if ('booking' in response.data) {
+      } else if ('booking' in response.data) {
         return response.data.booking;
+      } else if ('id' in response.data && 'bookingDate' in response.data) {
+        return response.data as Booking;
       }
       
       throw new Error('Unexpected response format');
@@ -120,8 +119,8 @@ class BookingApi {
       console.log('Sending booking data to server:', requestData);
       
       const response = await axiosInstance.post<
-        { data: Booking } |
-        { booking: Booking }
+        { data: Booking & { payment?: Payment & { paymentUrl?: string } } } |
+        { booking: Booking & { payment?: Payment & { paymentUrl?: string } } }
       >('/bookings', requestData);
 
       // Format 1: { data: {...} }

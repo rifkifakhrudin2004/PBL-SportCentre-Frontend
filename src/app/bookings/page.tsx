@@ -38,6 +38,9 @@ export default function BookingsPage() {
           <p className="text-gray-300 text-center max-w-xl mx-auto text-sm sm:text-base">
             Pilih cabang, tanggal, dan waktu yang tersedia untuk melakukan booking lapangan
           </p>
+          <p className="text-gray-400 text-center max-w-xl mx-auto mt-2 text-xs sm:text-sm">
+            Setelah booking, Anda akan diarahkan ke halaman pembayaran Midtrans untuk menyelesaikan transaksi
+          </p>
         </div>
       </div>
 

@@ -9,18 +9,21 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PaymentStatus, BookingWithPayment } from '@/types';
+import { useAuth } from '@/context/auth/auth.context';
 
 export default function HistoriesPage() {
   const [bookings, setBookings] = useState<BookingWithPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const user = useAuth();
+  const userId = user?.user?.id || 0; 
 
   useEffect(() => {
     const fetchBookings = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await bookingApi.getUserBookings();
+        const data = await bookingApi.getUserBookings(userId);
         setBookings(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Error fetching user bookings:', error);
@@ -31,7 +34,7 @@ export default function HistoriesPage() {
     };
 
     fetchBookings();
-  }, []);
+  }, [userId]);
 
   const getStatusColor = (status?: PaymentStatus) => {
     switch (status) {
@@ -135,7 +138,7 @@ export default function HistoriesPage() {
             </CardContent>
             <CardFooter className="pt-2">
               <Button asChild className="w-full">
-                <Link href={`/bookings/${booking.id}`}>
+                <Link href={`/histories/${booking.id}`}>
                   Lihat Detail
                 </Link>
               </Button>

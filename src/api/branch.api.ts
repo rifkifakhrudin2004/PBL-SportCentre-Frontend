@@ -52,7 +52,7 @@ class BranchApi {
    */
   async getBranches(params?: BranchListParams): Promise<BranchListResponse> {
     const response = await axiosInstance.get<BranchListResponse>('/branches', { params });
-          return response.data;
+    return response.data;
   }
 
   /**
@@ -66,8 +66,8 @@ class BranchApi {
   /**
    * Mendapatkan detail cabang berdasarkan ID
    */
-  async getBranchById(id: number): Promise<Branch> {
-    const response = await axiosInstance.get<Branch>(`/branches/${id}`);
+  async getBranchById(id: number): Promise<BranchListResponse> {
+    const response = await axiosInstance.get<BranchListResponse>(`/branches/${id}`);
     return response.data;
   }
 
